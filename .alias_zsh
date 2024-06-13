@@ -1,0 +1,15 @@
+alias ta="tmux a -t"
+alias tk="tmux kill-session -t"
+alias tl="tmux ls"
+alias tn="tmux new -s"
+
+alias scap='cat > /tmp/autocapture.txt'
+alias cap='tee /tmp/autocapture.txt'
+alias vcap='vim /tmp/autocapture.txt'
+alias ret='cat /tmp/autocapture.txt'
+
+alias scap2='cat > /tmp/autocapture2.txt'
+alias cap2='tee /tmp/autocapture2.txt'
+alias vcap2='vim /tmp/autocapture2.txt'
+alias ret2='cat /tmp/autocapture2.txt'
+
