@@ -18,4 +18,5 @@ map_key({ "n", "v" }, "<Leader>wh", ":wincmd h<CR>")
 map_key({ "n", "v" }, "<Leader>wj", ":wincmd j<CR>")
 map_key({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
 map_key({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
+-- close
 map_key({ "n", "v" }, "<Leader>wq", ":wincmd q<CR>")
