@@ -1,6 +1,4 @@
-
-source ~/.alias
-source ~/.alias_zsh
+source .zsh.alias
 
 bindkey '\e[H' beginning-of-line
 bindkey '\e[F' end-of-line

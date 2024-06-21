@@ -1,21 +1,27 @@
+repos="~/repos/"
+alias dotf="cd $repos/dotfiles"
+alias sa "source ~/.zsh.alias"
+
 alias l="ls -l"
 alias la="ls -la"
 
-repos="~/repos/"
-alias dotf="cd $repos/dotfiles"
-
+# tmux
 alias ta="tmux a -t"
 alias tk="tmux kill-session -t"
 alias tl="tmux ls"
 alias tn="tmux new -s"
 
+# captures
 alias scap='cat > /tmp/autocapture.txt'
 alias cap='tee /tmp/autocapture.txt'
-alias vcap='vim /tmp/autocapture.txt'
+alias vcap='nvim /tmp/autocapture.txt'
 alias ret='cat /tmp/autocapture.txt'
 
 alias scap2='cat > /tmp/autocapture2.txt'
 alias cap2='tee /tmp/autocapture2.txt'
-alias vcap2='vim /tmp/autocapture2.txt'
+alias vcap2='nvim /tmp/autocapture2.txt'
 alias ret2='cat /tmp/autocapture2.txt'
+
+# git
+alias lg='lazygit'
 
