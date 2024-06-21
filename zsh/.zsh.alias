@@ -22,6 +22,9 @@ alias cap2='tee /tmp/autocapture2.txt'
 alias vcap2='nvim /tmp/autocapture2.txt'
 alias ret2='cat /tmp/autocapture2.txt'
 
+alias hfc='fc -ln 1 | fzf | cap'
+alias hfc2='fc -ln 1 | fzf | cap2'
+
 # git
 alias lg='lazygit'
 
