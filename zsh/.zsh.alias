@@ -1,6 +1,6 @@
 repos="~/repos/"
 alias dotf="cd $repos/dotfiles"
-alias sa "source ~/.zsh.alias"
+alias sa="source ~/.zsh.alias"
 
 alias l="ls -l"
 alias la="ls -la"
