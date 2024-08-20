@@ -1,6 +1,9 @@
+alias sa="source ~/.zsh.alias"
+alias ea="nvim ~/.zsh.alias"
+
 repos="~/repos/"
 alias dotf="cd $repos/dotfiles"
-alias sa="source ~/.zsh.alias"
+alias nvc="cd $repos/dotfiles/nvim/.config/nvim"
 
 alias l="ls -l"
 alias la="ls -la"
@@ -22,8 +25,8 @@ alias cap2='tee /tmp/autocapture2.txt'
 alias vcap2='nvim /tmp/autocapture2.txt'
 alias ret2='cat /tmp/autocapture2.txt'
 
-alias hfc='fc -ln 1 | fzf | cap'
-alias hfc2='fc -ln 1 | fzf | cap2'
+alias hfc='fc -ln 1 | sort | uniq | fzf | cap'
+alias hfc2='fc -ln 1 | uniq | sort | fzf | cap2'
 
 # git
 alias lg='lazygit'
