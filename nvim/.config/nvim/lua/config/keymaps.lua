@@ -3,10 +3,21 @@
 -- Add any additional keymaps here
 
 -- vim.keymap.set("n", "<leader>e", "<cmd>echo 'hi'<CR>")
+-- vim.keymap.del('n', 's')
+-- vim.api.nvim_set_keymap('n', 's', '<Nop>', { noremap = true, silent = true })
+
+function handle_s_key()
+  local next_key = vim.fn.getchar()
+  local next_key_str = vim.fn.nr2char(next_key)
+  local cmd_str = 'call feedkeys(\'s' .. next_key_str .. '\')'
+  vim.cmd(cmd_str)
+end
 
 -- Function to map keys in multiple modes
-local function map_key(modes, lhs, rhs, opts)
+local function map_key(modes, lhs, rhs, opts, desc)
+  desc = desc or ""
   opts = opts or { noremap = true, silent = true }
+  opts["desc"] = desc
   for _, mode in ipairs(modes) do
     vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
   end
@@ -20,3 +31,9 @@ map_key({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
 map_key({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
 -- close
 map_key({ "n", "v" }, "<Leader>wq", ":wincmd q<CR>")
+
+-- s hack
+map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
+
+-- files
+map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
