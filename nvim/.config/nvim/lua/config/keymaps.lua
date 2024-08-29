@@ -37,3 +37,4 @@ map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 
 -- files
 map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
+map_key({ "n" }, "+", "g_")
