@@ -10,6 +10,9 @@ function handle_s_key()
   local next_key = vim.fn.getchar()
   local next_key_str = vim.fn.nr2char(next_key)
   local cmd_str = 'call feedkeys(\'s' .. next_key_str .. '\')'
+  if next_key_str ~= "d" and next_key_str ~= "a" then
+    return
+  end
   vim.cmd(cmd_str)
 end
 
