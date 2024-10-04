@@ -40,4 +40,8 @@ map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 
 -- files
 map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
+
 map_key({ "n" }, "+", "g_")
+-- refactor
+-- I need to know how to ask for input from the use via a popup textbox like mini.surround "saf" action
+-- map_key({ "n", "v" }, "<Leader>ce", "")
