@@ -10,6 +10,9 @@ function handle_s_key()
   local next_key = vim.fn.getchar()
   local next_key_str = vim.fn.nr2char(next_key)
   local cmd_str = 'call feedkeys(\'s' .. next_key_str .. '\')'
+  if next_key_str ~= "d" and next_key_str ~= "a" then
+    return
+  end
   vim.cmd(cmd_str)
 end
 
@@ -37,3 +40,8 @@ map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 
 -- files
 map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
+
+map_key({ "n" }, "+", "g_")
+-- refactor
+-- I need to know how to ask for input from the use via a popup textbox like mini.surround "saf" action
+-- map_key({ "n", "v" }, "<Leader>ce", "")
