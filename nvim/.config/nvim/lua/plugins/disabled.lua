@@ -5,4 +5,5 @@ return {
   -- { "folke/noice.nvim", enabled = false },
   { "folke/flash.nvim", enabled = false },
   { "smolck/command-completion.nvim", enabled = false },
+  { "gelguy/wilder.nvim", enabled = false },
 }
