@@ -36,6 +36,7 @@ map_key({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
 map_key({ "n", "v" }, "<Leader>wq", ":wincmd q<CR>")
 
 -- s hack
+-- map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 
 -- files
@@ -44,6 +45,8 @@ map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true
 ---- navigation
 map_key({ "n", "v", "o" }, "+", "$")
 map_key({ "n", "v", "o" }, "_", "^")
+map_key({ "v", "o" }, "L", "$")
+map_key({ "v", "o" }, "H", "^")
 
 -- refactor
 -- I need to know how to ask for input from the use via a popup textbox like mini.surround "saf" action
@@ -66,3 +69,29 @@ map_key({ "n", "v" }, "x", "\"xx")
 map_key({ "n", "v" }, "X", "\"x")
 map_key({ "v" }, "p", "P")
 map_key({ "v" }, "P", "p")
+
+
+------- dap
+---vim.keymap.set('n', '<F5>', function() require('dap').continue() end)
+---vim.keymap.set('n', '<F10>', function() require('dap').step_over() end)
+---vim.keymap.set('n', '<F11>', function() require('dap').step_into() end)
+---vim.keymap.set('n', '<F12>', function() require('dap').step_out() end)
+---vim.keymap.set('n', '<Leader>B', function() require('dap').set_breakpoint() end)
+---vim.keymap.set('n', '<Leader>lp', function() require('dap').set_breakpoint(nil, nil, vim.fn.input('Log point message: ')) end)
+---vim.keymap.set('n', '<Leader>dr', function() require('dap').repl.open() end)
+---vim.keymap.set('n', '<Leader>dl', function() require('dap').run_last() end)
+---vim.keymap.set({'n', 'v'}, '<Leader>dh', function()
+---  require('dap.ui.widgets').hover()
+---end)
+---vim.keymap.set({'n', 'v'}, '<Leader>dp', function()
+---  require('dap.ui.widgets').preview()
+---end)
+---vim.keymap.set('n', '<Leader>df', function()
+---  local widgets = require('dap.ui.widgets')
+---  widgets.centered_float(widgets.frames)
+---end)
+---vim.keymap.set('n', '<Leader>ds', function()
+---  local widgets = require('dap.ui.widgets')
+---  widgets.centered_float(widgets.scopes)
+---end)
+---
