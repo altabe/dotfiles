@@ -41,7 +41,28 @@ map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
 -- files
 map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
 
-map_key({ "n" }, "+", "g_")
+---- navigation
+map_key({ "n", "v", "o" }, "+", "$")
+map_key({ "n", "v", "o" }, "_", "^")
+
 -- refactor
 -- I need to know how to ask for input from the use via a popup textbox like mini.surround "saf" action
 -- map_key({ "n", "v" }, "<Leader>ce", "")
+
+---- editing
+-- duplicating
+map_key({ "n" }, "<Leader>j", ":co.<CR>", nil, "duplicate line down")
+map_key({ "v" }, "<Leader>j", "\"jy`]\"jp", nil, "duplicate selection down")
+map_key({ "n" }, "<Leader>k", ":co-1<CR>", nil, "duplicate line up")
+map_key({ "v" }, "<Leader>k", "\"ky`[\"kP", nil, "duplicate selection up")
+
+---- yanking
+-- registers
+map_key({ "n", "v" }, "c", "\"cc")
+map_key({ "n", "v" }, "C", "\"c")
+map_key({ "n", "v" }, "d", "\"dd")
+map_key({ "n", "v" }, "D", "\"d")
+map_key({ "n", "v" }, "x", "\"xx")
+map_key({ "n", "v" }, "X", "\"x")
+map_key({ "v" }, "p", "P")
+map_key({ "v" }, "P", "p")
