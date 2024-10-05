@@ -1,5 +1,6 @@
 alias sa="source ~/.zsh.alias"
 alias ea="nvim ~/.zsh.alias"
+alias nv="nvim"
 
 repos="~/repos/"
 alias dotf="cd $repos/dotfiles"
@@ -9,7 +10,7 @@ alias l="ls -l"
 alias la="ls -la"
 
 # tmux
-alias ta="tmux a -t"
+alias ta="tmux a"
 alias tk="tmux kill-session -t"
 alias tl="tmux ls"
 alias tn="tmux new -s"
@@ -30,4 +31,5 @@ alias hfc2='fc -ln 1 | uniq | sort | fzf | cap2'
 
 # git
 alias lg='lazygit'
+alias gsu='git status -uno'
 
