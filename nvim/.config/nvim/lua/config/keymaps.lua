@@ -1,61 +1,62 @@
 vim.g.mapleader = " "
 
--- Function to map keys in multiple modes
-local function map_key(modes, lhs, rhs, opts, desc)
-  desc = desc or ""
-  opts = opts or { noremap = true, silent = true }
-  opts["desc"] = desc
-  vim.keymap.set(modes, lhs, rhs, opts)
-end
-
--- Handling splits
--- switch
-map_key({ "n", "v" }, "<Leader>wh", ":wincmd h<CR>")
-map_key({ "n", "v" }, "<Leader>wj", ":wincmd j<CR>")
-map_key({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
-map_key({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
-
 -- window management
-map_key("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" }) -- split window vertically
-map_key("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" }) -- split window horizontally
-map_key("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" }) -- make split windows equal width & height
-map_key("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" }) -- close current split window
+vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" }) -- split window vertically
+vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" }) -- split window horizontally
+vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" }) -- make split windows equal width & height
+vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" }) -- close current split window
 
-map_key("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
-map_key("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
-map_key("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
-map_key("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
-map_key("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
-
--- close
-map_key({ "n", "v" }, "<Leader>wq", ":wincmd q<CR>")
-
--- s hack
--- map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
-map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
-
--- files
-map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
+vim.keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
+vim.keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
+vim.keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
+vim.keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
+vim.keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
 
 ---- navigation
-map_key({ "n", "v", "o" }, "+", "$")
-map_key({ "n", "v", "o" }, "_", "^")
-map_key({ "v", "o" }, "L", "$")
-map_key({ "v", "o" }, "H", "^")
+-- line navigation
+vim.keymap.set({ "n", "v", "o" }, "L", "$")
+vim.keymap.set({ "n", "v", "o" }, "H", "^")
+-- switch
+vim.keymap.set({ "n", "v" }, "<Leader>wh", ":wincmd h<CR>")
+vim.keymap.set({ "n", "v" }, "<Leader>wj", ":wincmd j<CR>")
+vim.keymap.set({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
+vim.keymap.set({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
 
 ---- editing
 -- duplicating
-map_key({ "n" }, "<Leader>j", ":co.<CR>", nil, "duplicate line down")
-map_key({ "v" }, "<Leader>j", "\"jy`]\"jp", nil, "duplicate selection down")
-map_key({ "n" }, "<Leader>k", ":co-1<CR>", nil, "duplicate line up")
-map_key({ "v" }, "<Leader>k", "\"ky`[\"kP", nil, "duplicate selection up")
+vim.keymap.set({ "n" }, "<Leader>j", ":co.<CR>", { desc = "duplicate line down"})
+vim.keymap.set({ "v" }, "<Leader>j", "\"jy`]\"jp", { desc = "duplicate selection down" })
+vim.keymap.set({ "n" }, "<Leader>k", ":co-1<CR>", { desc = "duplicate line up" })
+vim.keymap.set({ "v" }, "<Leader>k", "\"ky`[\"kP", { desc = "duplicate selection up" })
+-- move
+vim.keymap.set({ "n" }, "<A-j>", ":m+1<cr>")
+vim.keymap.set({ "n" }, "<A-k>", ":m-2<cr>")
+vim.keymap.set({ "i" }, "<A-j>", "<esc>:m +1<cr>==gi")
+vim.keymap.set({ "i" }, "<A-k>", "<esc>:m -2<cr>==gi")
+vim.keymap.set({ "v" }, "<A-j>", ":m '>+1<cr>gv=gv")
+vim.keymap.set({ "v" }, "<A-k>", ":m '<-2<cr>gv=gv")
+-- indent
+vim.keymap.set({ "v" }, "<", "<gv")
+vim.keymap.set({ "v" }, ">", ">gv")
+vim.keymap.set({ "n" }, ">", ">>")
+vim.keymap.set({ "n" }, "<", "<<")
 
 ---- yanking
 -- registers
-map_key({ "n", "v" }, "c", "\"cc")
-map_key({ "n", "v" }, "C", "\"c")
-map_key({ "n", "v" }, "d", "\"dd")
-map_key({ "n", "v" }, "D", "\"d")
-map_key({ "n", "v" }, "x", "\"xx")
-map_key({ "n", "v" }, "X", "\"x")
+vim.keymap.set({ "n", "v" }, "c", "\"cc")
+vim.keymap.set({ "n", "v" }, "C", "\"c")
+vim.keymap.set({ "n", "v" }, "d", "\"dd")
+vim.keymap.set({ "n", "v" }, "D", "\"d")
+vim.keymap.set({ "n", "v" }, "x", "\"xx")
+vim.keymap.set({ "n", "v" }, "X", "\"x")
 
+---------- Plugins ----------
+
+-- fzf lua
+vim.keymap.set({"n", "v"}, "<leader>p", "<cmd>FzfLua files<cr>", { desc = "find files" })
+
+-- nvim-tree
+vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeFindFileToggle<CR>", {desc = "Toggle file explorer"})
+-- vim.keymap.set("n", "<leader>ef", "<cmd>NvimTreeFindFileToggle<CR>", {desc = "Toggle file explorer on current file"})
+-- vim.keymap.set("n", "<leader>ec", "<cmd>NvimTreeCollapse<CR>", {desc = "Collapse file explorer"})
+-- vim.keymap.set("n", "<leader>er", "<cmd>NvimTreeRefresh<CR>", {desc = "Refresh file explorer"})
