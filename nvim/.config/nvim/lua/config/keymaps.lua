@@ -42,20 +42,50 @@ vim.keymap.set({ "n" }, "<", "<<")
 
 ---- yanking
 -- registers
-vim.keymap.set({ "n", "v" }, "c", "\"cc")
-vim.keymap.set({ "n", "v" }, "C", "\"c")
-vim.keymap.set({ "n", "v" }, "d", "\"dd")
-vim.keymap.set({ "n", "v" }, "D", "\"d")
-vim.keymap.set({ "n", "v" }, "x", "\"xx")
-vim.keymap.set({ "n", "v" }, "X", "\"x")
+vim.keymap.set({ "n", "v" }, "c", '"cc')
+vim.keymap.set({ "n", "v" }, "C", '"c')
+vim.keymap.set({ "n", "v" }, "d", '"dd')
+vim.keymap.set({ "n", "v" }, "D", '"d')
+vim.keymap.set({ "n", "v" }, "x", '"xx')
+vim.keymap.set({ "n", "v" }, "X", '"x')
+
+---------- UI ----------
+vim.keymap.set(
+  'n',
+  '<leader>ud',
+  function()
+    vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+  end,
+  { silent = true, noremap = true, desc = "[U]I Toggle [D]iagnostics"}
+)
 
 ---------- Plugins ----------
 
 -- fzf lua
-vim.keymap.set({"n", "v"}, "<leader>p", "<cmd>FzfLua files<cr>", { desc = "find files" })
+vim.keymap.set({ "n", "v" }, "<leader>p", "<cmd>FzfLua files<cr>", { desc = "find files" })
 
 -- nvim-tree
-vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeFindFileToggle<CR>", {desc = "Toggle file explorer"})
+vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeFindFileToggle<CR>", { desc = "Toggle file explorer" })
 -- vim.keymap.set("n", "<leader>ef", "<cmd>NvimTreeFindFileToggle<CR>", {desc = "Toggle file explorer on current file"})
 -- vim.keymap.set("n", "<leader>ec", "<cmd>NvimTreeCollapse<CR>", {desc = "Collapse file explorer"})
 -- vim.keymap.set("n", "<leader>er", "<cmd>NvimTreeRefresh<CR>", {desc = "Refresh file explorer"})
+
+---------- Kickstarter imports ----------
+
+-- [[ Basic Keymaps ]]
+--  See `:help vim.keymap.set()`
+
+-- Clear highlights on search when pressing <Esc> in normal mode
+--  See `:help hlsearch`
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
+
+-- Diagnostic keymaps
+vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+
+-- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
+-- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
+-- is not what someone will guess without a bit more experience.
+--
+-- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
+-- or just use <C-\><C-n> to exit terminal mode
+vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
