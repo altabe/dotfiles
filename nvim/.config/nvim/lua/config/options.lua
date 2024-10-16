@@ -63,3 +63,5 @@ vim.opt.wrap = true
 
 vim.opt.termguicolors = true
 vim.opt.background = "dark"
+
+vim.opt.tabstop = 2
