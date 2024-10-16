@@ -39,3 +39,7 @@ else
 }
 end
 -- patch end
+
+vim.g.lazyvim_python_lsp = "basedpyright"
+vim.lsp.inlay_hint.enable(false)
+vim.diagnostic.enable(false)
