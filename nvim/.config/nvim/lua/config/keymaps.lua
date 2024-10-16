@@ -14,18 +14,19 @@ vim.keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current bu
 -- line navigation
 vim.keymap.set({ "n", "v", "o" }, "L", "$")
 vim.keymap.set({ "n", "v", "o" }, "H", "^")
--- switch
-vim.keymap.set({ "n", "v" }, "<Leader>wh", ":wincmd h<CR>")
-vim.keymap.set({ "n", "v" }, "<Leader>wj", ":wincmd j<CR>")
-vim.keymap.set({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
-vim.keymap.set({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
+-- splits
+--  See `:help wincmd` for a list of all window commands
+vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
+vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
+vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to the lower window" })
+vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper window" })
 
 ---- editing
 -- duplicating
-vim.keymap.set({ "n" }, "<Leader>j", ":co.<CR>", { desc = "duplicate line down"})
-vim.keymap.set({ "v" }, "<Leader>j", "\"jy`]\"jp", { desc = "duplicate selection down" })
+vim.keymap.set({ "n" }, "<Leader>j", ":co.<CR>", { desc = "duplicate line down" })
+vim.keymap.set({ "v" }, "<Leader>j", '"jy`]"jp', { desc = "duplicate selection down" })
 vim.keymap.set({ "n" }, "<Leader>k", ":co-1<CR>", { desc = "duplicate line up" })
-vim.keymap.set({ "v" }, "<Leader>k", "\"ky`[\"kP", { desc = "duplicate selection up" })
+vim.keymap.set({ "v" }, "<Leader>k", '"ky`["kP', { desc = "duplicate selection up" })
 -- move
 vim.keymap.set({ "n" }, "<A-j>", ":m+1<cr>")
 vim.keymap.set({ "n" }, "<A-k>", ":m-2<cr>")
