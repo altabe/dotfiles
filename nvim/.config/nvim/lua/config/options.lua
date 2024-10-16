@@ -1,45 +1,67 @@
--- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
--- Add any additional options here
+vim.cmd("let g:netrw_liststyle = 3")
+-- See `:help vim.opt`
+-- NOTE: You can change these options as you wish!
+--  For more options, you can see `:help option-list`
 
-local opt = vim.opt
+-- Enable mouse mode, can be useful for resizing splits for example!
+vim.opt.mouse = "a"
 
-opt.relativenumber = true
-opt.number = true
+-- Don't show the mode, since it's already in the status line
+vim.opt.showmode = false
 
-opt.scrolloff = 15
+-- Sync clipboard between OS and Neovim.
+--  Schedule the setting after `UiEnter` because it can increase startup-time.
+--  Remove this option if you want your OS clipboard to remain independent.
+--  See `:help 'clipboard'`
+vim.schedule(function()
+	vim.opt.clipboard = "unnamedplus"
+end)
 
-vim.g.autoformat = false
+-- Enable break indent
+vim.opt.breakindent = true
 
--- patch source: https://github.com/neovim/neovim/issues/28611#issuecomment-2147744670
-function my_paste(reg)
-    return function(lines)
+-- Save undo history
+vim.opt.undofile = true
 
-        local content = vim.fn.getreg('"')
-        return vim.split(content, '\n')
-        
-    end
-end
+-- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
 
-if (os.getenv('SSH_TTY') == nil)
-then
-    opt.clipboard:append("unnamedplus")
-else
-    opt.clipboard:append("unnamedplus")
-    vim.g.clipboard = {
-      name = 'OSC 52',
-      copy = {
-        ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
-        ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
-      },
-      paste = {
-        ["+"] = my_paste("+"),
-        ["*"] = my_paste("*"),
-    },
-}
-end
--- patch end
+-- Keep signcolumn on by default
+vim.opt.signcolumn = "yes"
 
-vim.g.lazyvim_python_lsp = "basedpyright"
-vim.lsp.inlay_hint.enable(false)
-vim.diagnostic.enable(false)
+-- Decrease update time
+vim.opt.updatetime = 250
+
+-- Decrease mapped sequence wait time
+-- Displays which-key popup sooner
+vim.opt.timeoutlen = 300
+
+-- Configure how new splits should be opened
+vim.opt.splitright = true
+vim.opt.splitbelow = true
+
+-- Sets how neovim will display certain whitespace characters in the editor.
+--  See `:help 'list'`
+--  and `:help 'listchars'`
+vim.opt.list = true
+vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+
+-- Preview substitutions live, as you type!
+vim.opt.inccommand = "split"
+
+-- Show which line your cursor is on
+vim.opt.cursorline = true
+
+-- Minimal number of screen lines to keep above and below the cursor.
+vim.opt.scrolloff = 20
+
+vim.opt.number = true
+vim.opt.relativenumber = true
+
+vim.opt.wrap = true
+
+vim.opt.termguicolors = true
+vim.opt.background = "dark"
+
+vim.opt.tabstop = 2

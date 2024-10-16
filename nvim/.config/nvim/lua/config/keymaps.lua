@@ -1,97 +1,91 @@
--- Keymaps are automatically loaded on the VeryLazy event
--- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
--- Add any additional keymaps here
+-- window management
+vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" }) -- split window vertically
+vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" }) -- split window horizontally
+vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" }) -- make split windows equal width & height
+vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" }) -- close current split window
 
--- vim.keymap.set("n", "<leader>e", "<cmd>echo 'hi'<CR>")
--- vim.keymap.del('n', 's')
--- vim.api.nvim_set_keymap('n', 's', '<Nop>', { noremap = true, silent = true })
-
-function handle_s_key()
-  local next_key = vim.fn.getchar()
-  local next_key_str = vim.fn.nr2char(next_key)
-  local cmd_str = 'call feedkeys(\'s' .. next_key_str .. '\')'
-  if next_key_str ~= "d" and next_key_str ~= "a" then
-    return
-  end
-  vim.cmd(cmd_str)
-end
-
--- Function to map keys in multiple modes
-local function map_key(modes, lhs, rhs, opts, desc)
-  desc = desc or ""
-  opts = opts or { noremap = true, silent = true }
-  opts["desc"] = desc
-  for _, mode in ipairs(modes) do
-    vim.api.nvim_set_keymap(mode, lhs, rhs, opts)
-  end
-end
-
--- Handling splits
--- switch
-map_key({ "n", "v" }, "<Leader>wh", ":wincmd h<CR>")
-map_key({ "n", "v" }, "<Leader>wj", ":wincmd j<CR>")
-map_key({ "n", "v" }, "<Leader>wk", ":wincmd k<CR>")
-map_key({ "n", "v" }, "<Leader>wl", ":wincmd l<CR>")
--- close
-map_key({ "n", "v" }, "<Leader>wq", ":wincmd q<CR>")
-
--- s hack
--- map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
-map_key({ "n" }, "s", ":lua handle_s_key()<CR>")
-
--- files
-map_key({ "n", "v" }, "<Leader>F", "<Leader>fF", {noremap = false, silent = true})
+vim.keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
+vim.keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
+vim.keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
+vim.keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
+vim.keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
 
 ---- navigation
-map_key({ "n", "v", "o" }, "+", "$")
-map_key({ "n", "v", "o" }, "_", "^")
-map_key({ "v", "o" }, "L", "$")
-map_key({ "v", "o" }, "H", "^")
-
--- refactor
--- I need to know how to ask for input from the use via a popup textbox like mini.surround "saf" action
--- map_key({ "n", "v" }, "<Leader>ce", "")
+-- line navigation
+vim.keymap.set({ "n", "v", "o" }, "L", "$")
+vim.keymap.set({ "n", "v", "o" }, "H", "^")
+-- splits
+--  See `:help wincmd` for a list of all window commands
+vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
+vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
+vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to the lower window" })
+vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper window" })
 
 ---- editing
 -- duplicating
-map_key({ "n" }, "<Leader>j", ":co.<CR>", nil, "duplicate line down")
-map_key({ "v" }, "<Leader>j", "\"jy`]\"jp", nil, "duplicate selection down")
-map_key({ "n" }, "<Leader>k", ":co-1<CR>", nil, "duplicate line up")
-map_key({ "v" }, "<Leader>k", "\"ky`[\"kP", nil, "duplicate selection up")
+vim.keymap.set({ "n" }, "<Leader>j", ":co.<CR>", { desc = "duplicate line down" })
+vim.keymap.set({ "v" }, "<Leader>j", '"jy`]"jp', { desc = "duplicate selection down" })
+vim.keymap.set({ "n" }, "<Leader>k", ":co-1<CR>", { desc = "duplicate line up" })
+vim.keymap.set({ "v" }, "<Leader>k", '"ky`["kP', { desc = "duplicate selection up" })
+-- move
+vim.keymap.set({ "n" }, "<A-j>", ":m+1<cr>")
+vim.keymap.set({ "n" }, "<A-k>", ":m-2<cr>")
+vim.keymap.set({ "i" }, "<A-j>", "<esc>:m +1<cr>==gi")
+vim.keymap.set({ "i" }, "<A-k>", "<esc>:m -2<cr>==gi")
+vim.keymap.set({ "v" }, "<A-j>", ":m '>+1<cr>gv=gv")
+vim.keymap.set({ "v" }, "<A-k>", ":m '<-2<cr>gv=gv")
+-- indent
+vim.keymap.set({ "v" }, "<", "<gv")
+vim.keymap.set({ "v" }, ">", ">gv")
+vim.keymap.set({ "n" }, ">", ">>")
+vim.keymap.set({ "n" }, "<", "<<")
 
 ---- yanking
 -- registers
-map_key({ "n", "v" }, "c", "\"cc")
-map_key({ "n", "v" }, "C", "\"c")
-map_key({ "n", "v" }, "d", "\"dd")
-map_key({ "n", "v" }, "D", "\"d")
-map_key({ "n", "v" }, "x", "\"xx")
-map_key({ "n", "v" }, "X", "\"x")
-map_key({ "v" }, "p", "P")
-map_key({ "v" }, "P", "p")
+vim.keymap.set({ "n", "v" }, "c", '"cc')
+vim.keymap.set({ "n", "v" }, "C", '"c')
+vim.keymap.set({ "n", "v" }, "d", '"dd')
+vim.keymap.set({ "n", "v" }, "D", '"d')
+vim.keymap.set({ "n", "v" }, "x", '"xx')
+vim.keymap.set({ "n", "v" }, "X", '"x')
 
+---------- UI ----------
+vim.keymap.set(
+  'n',
+  '<leader>ud',
+  function()
+    vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+  end,
+  { silent = true, noremap = true, desc = "[U]I Toggle [D]iagnostics"}
+)
 
-------- dap
----vim.keymap.set('n', '<F5>', function() require('dap').continue() end)
----vim.keymap.set('n', '<F10>', function() require('dap').step_over() end)
----vim.keymap.set('n', '<F11>', function() require('dap').step_into() end)
----vim.keymap.set('n', '<F12>', function() require('dap').step_out() end)
----vim.keymap.set('n', '<Leader>B', function() require('dap').set_breakpoint() end)
----vim.keymap.set('n', '<Leader>lp', function() require('dap').set_breakpoint(nil, nil, vim.fn.input('Log point message: ')) end)
----vim.keymap.set('n', '<Leader>dr', function() require('dap').repl.open() end)
----vim.keymap.set('n', '<Leader>dl', function() require('dap').run_last() end)
----vim.keymap.set({'n', 'v'}, '<Leader>dh', function()
----  require('dap.ui.widgets').hover()
----end)
----vim.keymap.set({'n', 'v'}, '<Leader>dp', function()
----  require('dap.ui.widgets').preview()
----end)
----vim.keymap.set('n', '<Leader>df', function()
----  local widgets = require('dap.ui.widgets')
----  widgets.centered_float(widgets.frames)
----end)
----vim.keymap.set('n', '<Leader>ds', function()
----  local widgets = require('dap.ui.widgets')
----  widgets.centered_float(widgets.scopes)
----end)
----
+---------- Plugins ----------
+
+-- fzf lua
+vim.keymap.set({ "n", "v" }, "<leader>p", "<cmd>FzfLua files<cr>", { desc = "find files" })
+
+-- nvim-tree
+vim.keymap.set("n", "<leader>e", "<cmd>NvimTreeFindFileToggle<CR>", { desc = "Toggle file explorer" })
+-- vim.keymap.set("n", "<leader>ef", "<cmd>NvimTreeFindFileToggle<CR>", {desc = "Toggle file explorer on current file"})
+-- vim.keymap.set("n", "<leader>ec", "<cmd>NvimTreeCollapse<CR>", {desc = "Collapse file explorer"})
+-- vim.keymap.set("n", "<leader>er", "<cmd>NvimTreeRefresh<CR>", {desc = "Refresh file explorer"})
+
+---------- Kickstarter imports ----------
+
+-- [[ Basic Keymaps ]]
+--  See `:help vim.keymap.set()`
+
+-- Clear highlights on search when pressing <Esc> in normal mode
+--  See `:help hlsearch`
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
+
+-- Diagnostic keymaps
+vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+
+-- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
+-- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
+-- is not what someone will guess without a bit more experience.
+--
+-- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
+-- or just use <C-\><C-n> to exit terminal mode
+vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
