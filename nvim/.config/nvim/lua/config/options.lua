@@ -65,3 +65,4 @@ vim.opt.termguicolors = true
 vim.opt.background = "dark"
 
 vim.opt.tabstop = 2
+vim.cmd("set cedit=<C-i>") -- set c-i to open command window from withing command line mode
