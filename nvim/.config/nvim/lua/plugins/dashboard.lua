@@ -45,7 +45,10 @@ return {
             desc_hl = 'String',
             key = 'c',
             key_format = ' %s',
-            action = 'Telescope fd seach_dirs=~/.config/nvim/'
+            action = function()
+              local builtin = require("telescope.builtin")
+              builtin.find_files({ cwd = vim.fn.stdpath("config") })
+            end
           },
           {
             icon = '❌ ',
