@@ -33,3 +33,10 @@ alias hfc2='fc -ln 1 | uniq | sort | fzf | cap2'
 alias lg='lazygit'
 alias gsu='git status -uno'
 
+#python
+alias python='python3'
+alias py='python3'
+alias pip='pip3 --require-virtualenv'
+
+# kitty
+alias icat='kitten icat'
