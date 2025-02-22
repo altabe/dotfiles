@@ -40,6 +40,9 @@ vim.keymap.set({ "v" }, "<", "<gv")
 vim.keymap.set({ "v" }, ">", ">gv")
 vim.keymap.set({ "n" }, ">", ">>")
 vim.keymap.set({ "n" }, "<", "<<")
+-- comments
+vim.keymap.set({ "n", "v" }, "gc", "gcc", {desc = "toggle comment", noremap=false})
+
 
 ---- yanking
 -- registers
