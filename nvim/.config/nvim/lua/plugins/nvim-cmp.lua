@@ -112,6 +112,9 @@ return { -- Autocompletion
 			mapping = cmp.mapping.preset.cmdline(),
 			sources = {
 				{ name = 'buffer' }
+			},
+			completion = {
+				completeopt = 'menu,menuone,noselect'
 			}
 		})
 
