@@ -1,16 +1,17 @@
 # Minimal Neovim Configuration for Remote Development
 
-This is a minimal Neovim configuration optimized for remote development performance. The lazy.nvim plugin manager is enabled but no plugins are installed to ensure fast startup and operation on remote machines.
+This is a minimal Neovim configuration optimized for remote development performance. The lazy.nvim plugin manager is enabled with only the essential theme plugin installed to ensure fast startup and operation on remote machines.
 
 ## What's Disabled
 
-- **All plugins** - No telescope, nvim-tree, LSP, etc. are installed
+- **Most plugins** - No telescope, nvim-tree, LSP, etc. are installed
 - **Plugin-related keybindings** - All mappings that depend on plugins are commented out
 - **Plugin checker** - Disabled to prevent network calls on startup
 
 ## What's Enabled
 
 - **lazy.nvim** - Plugin manager is available for future use
+- **Catppuccin theme** - Beautiful color scheme for better visual experience
 - **Basic Neovim functionality** - All core features work normally
 - **Window and tab management** - Split, resize, navigate windows and tabs
 - **Text editing operations** - Duplicate, move, indent text
@@ -54,23 +55,25 @@ To test this configuration:
 1. Start Neovim: `nvim`
 2. Check startup time: `:startuptime`
 3. Verify lazy.nvim is loaded: `:lua print(package.loaded.lazy ~= nil)`
-4. Check no plugins are installed: `:Lazy`
+4. Check theme is loaded: `:lua print(pcall(require, 'catppuccin'))`
+5. View installed plugins: `:Lazy`
 
-## Adding Plugins
+## Adding More Plugins
 
-To add plugins back for local development:
+To add additional plugins for local development:
 
 1. Edit `.config/nvim/lua/config/lazy.lua`
-2. Uncomment the plugins import: `{ import = "plugins" }`
+2. Uncomment the full plugins import: `{ import = "plugins" }`
 3. Or add individual plugins to the spec table
 
 ## Performance Benefits
 
 This setup provides:
-- **Fast startup** - No plugin loading or initialization
-- **Low memory usage** - Only lazy.nvim itself is loaded
+- **Fast startup** - Only lazy.nvim and theme plugin load
+- **Low memory usage** - Minimal plugin overhead
 - **No network calls** - Plugin checker disabled
 - **Stable performance** - No background plugin processes
+- **Beautiful UI** - Catppuccin theme for better visual experience
 - **Easy to extend** - Plugin manager ready for future use
 
 ## File Structure
@@ -82,6 +85,6 @@ This setup provides:
 │   └── config/
 │       ├── options.lua         # Basic Neovim options
 │       ├── keymaps.lua         # Keybindings (plugin ones commented)
-│       └── lazy.lua           # Plugin manager (enabled, no plugins)
-└── plugins/                    # Plugin configurations (not loaded)
+│       └── lazy.lua           # Plugin manager (theme enabled)
+└── plugins/                    # Plugin configurations (only colorscheme loaded)
 ``` 
