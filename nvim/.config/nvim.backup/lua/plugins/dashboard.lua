@@ -1,0 +1,75 @@
+return {
+  'nvimdev/dashboard-nvim',
+  event = 'VimEnter',
+  -- enabled = false,
+  config = function()
+    local db = require('dashboard')
+    db.setup({
+      theme = 'doom',
+      config = {
+        header = {
+          vim.fn.getcwd(),
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+        },
+        center = {
+          {
+            icon = '📁 ',
+            icon_hl = 'Title',
+            desc = 'Find File                               ',
+            desc_hl = 'String',
+            key = 'f',
+            key_hl = 'Number',
+            key_format = ' %s',
+            action = 'Telescope fd',
+          },
+          {
+            icon = '🔎 ',
+            desc = 'Grep         ',
+            desc_hl = 'String',
+            key = 'g',
+            key_format = ' %s',
+            action = 'Telescope live_grep'
+          },
+          {
+            icon = '🛠️ ',
+            desc = 'Configure',
+            desc_hl = 'String',
+            key = 'c',
+            key_format = ' %s',
+            action = function()
+              local builtin = require("telescope.builtin")
+              builtin.find_files({ cwd = vim.fn.stdpath("config") })
+            end
+          },
+          {
+            icon = '💤 ',
+            desc = 'Lazy',
+            desc_hl = 'String',
+            key = 'l',
+            key_format = ' %s',
+            action = 'Lazy'
+          },
+          {
+            icon = '❌ ',
+            desc = 'quit',
+            desc_hl = 'String',
+            key = 'q',
+            key_format = ' %s',
+            action = 'q'
+          },
+        },
+        footer = {}  --your footer
+      }
+    })
+  end,
+  dependencies = { {'nvim-tree/nvim-web-devicons'}}
+}

@@ -21,16 +21,16 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- Setup lazy.nvim with no plugins for remote development performance
+-- Setup lazy.nvim
 require("lazy").setup({
   spec = {
-    -- No plugins imported - empty spec for minimal setup
-    -- { import = "plugins" }, -- DISABLED: No plugins for remote performance
+    -- import your plugins
+    { import = "plugins" },
   },
   -- Configure any other settings here. See the documentation for more details.
   -- automatically check for plugin updates
   checker = {
-    enabled = false, -- Disabled for remote performance
+    enabled = true,
     notify = false
   },
 })
