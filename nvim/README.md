@@ -85,13 +85,23 @@ To add additional plugins for local development:
 ## Performance Benefits
 
 This setup provides:
-- **Fast startup** - Only essential plugins load
+- **Fast startup** - Only essential plugins load (~43ms on modern systems)
 - **Low memory usage** - Minimal plugin overhead
 - **No network calls** - Plugin checker disabled
 - **Stable performance** - No background plugin processes
 - **Beautiful UI** - Catppuccin theme for better visual experience
 - **Productive search** - Telescope for fast file and content finding
 - **Easy to extend** - Plugin manager ready for future use
+- **Optimized for remote** - Performance tweaks for remote development
+
+## Performance Optimization
+
+The configuration includes several optimizations:
+- **Reduced updatetime** - Faster completion and diagnostics
+- **Disabled swap/backup files** - Faster file operations
+- **Optimized telescope layout** - Horizontal layout for better performance
+- **Lazy redraw** - Don't redraw during macro execution
+- **Hidden buffers** - Don't unload buffers when abandoned
 
 ## File Structure
 

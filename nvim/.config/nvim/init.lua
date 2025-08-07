@@ -5,6 +5,17 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.have_nerd_font = true
 
+-- Performance optimizations for faster startup
+vim.opt.updatetime = 100 -- Faster completion
+vim.opt.timeoutlen = 300 -- Faster key sequence completion
+vim.opt.lazyredraw = true -- Don't redraw while executing macros
+vim.opt.hidden = true -- Don't unload buffers when abandoned
+
+-- Disable some features for faster startup
+vim.opt.swapfile = false -- Don't create swap files
+vim.opt.backup = false -- Don't create backup files
+vim.opt.writebackup = false -- Don't create backup files before writing
+
 -- [[ Basic Autocommands ]]
 -- Highlight when yanking (copying) text
 vim.api.nvim_create_autocmd("TextYankPost", {

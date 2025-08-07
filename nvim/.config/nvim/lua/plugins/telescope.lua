@@ -88,6 +88,19 @@ return { -- Fuzzy Finder (files, lsp, etc)
           -- Only ignore files that are explicitly ignored by git
         },
         find_command = find_command,
+        -- Performance optimizations
+        layout_strategy = "horizontal",
+        layout_config = {
+          horizontal = {
+            prompt_position = "top",
+            preview_width = 0.55,
+            results_width = 0.8,
+          },
+        },
+        -- Faster preview
+        preview = {
+          timeout = 100,
+        },
       },
       pickers = {
         find_files = {
@@ -95,6 +108,15 @@ return { -- Fuzzy Finder (files, lsp, etc)
           hidden = true,
           -- Respect gitignore
           find_command = find_command,
+          -- Performance optimizations
+          layout_strategy = "horizontal",
+          layout_config = {
+            horizontal = {
+              prompt_position = "top",
+              preview_width = 0.55,
+              results_width = 0.8,
+            },
+          },
         },
       },
       extensions = {
