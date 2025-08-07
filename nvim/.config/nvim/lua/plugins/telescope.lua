@@ -57,6 +57,20 @@ return { -- Fuzzy Finder (files, lsp, etc)
       vim.cmd(string.format("noautocmd lua vim.api.nvim_set_current_win(%s)", winid))
       -- api.nvim_set_current_win(winid)
     end
+    -- Check if ripgrep is available for better file finding
+    local find_command = vim.fn.executable("rg") == 1 and {
+      "rg",
+      "--files",
+      "--hidden",
+      "--follow",
+      "--glob", "!.git/*",
+    } or {
+      "find",
+      ".",
+      "-type", "f",
+      "-not", "-path", "./.git/*",
+    }
+
     require("telescope").setup({
       -- You can put your default mappings / updates / etc. in here
       --  All the info you're looking for is in `:help telescope.setup()`
@@ -68,8 +82,21 @@ return { -- Fuzzy Finder (files, lsp, etc)
             ['<Tab>'] = focus_preview,
           },
         },
+        -- Show hidden files and directories while respecting gitignore
+        file_ignore_patterns = {
+          -- Don't ignore hidden files by default
+          -- Only ignore files that are explicitly ignored by git
+        },
+        find_command = find_command,
       },
-      -- pickers = {}
+      pickers = {
+        find_files = {
+          -- Show hidden files and directories
+          hidden = true,
+          -- Respect gitignore
+          find_command = find_command,
+        },
+      },
       extensions = {
         ["ui-select"] = {
           require("telescope.themes").get_dropdown(),
@@ -85,7 +112,12 @@ return { -- Fuzzy Finder (files, lsp, etc)
     local builtin = require("telescope.builtin")
     vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
     vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-    vim.keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
+    vim.keymap.set("n", "<leader>sf", function()
+      builtin.find_files({
+        hidden = true,
+        find_command = find_command,
+      })
+    end, { desc = "[S]earch [F]iles (including hidden)" })
     vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]earch [S]elect Telescope" })
     vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
     vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })

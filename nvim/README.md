@@ -1,17 +1,18 @@
 # Minimal Neovim Configuration for Remote Development
 
-This is a minimal Neovim configuration optimized for remote development performance. The lazy.nvim plugin manager is enabled with only the essential theme plugin installed to ensure fast startup and operation on remote machines.
+This is a minimal Neovim configuration optimized for remote development performance. The lazy.nvim plugin manager is enabled with essential plugins including fuzzy file search for productivity.
 
 ## What's Disabled
 
-- **Most plugins** - No telescope, nvim-tree, LSP, etc. are installed
-- **Plugin-related keybindings** - All mappings that depend on plugins are commented out
+- **Most plugins** - No nvim-tree, LSP, etc. are installed
+- **Plugin-related keybindings** - All mappings that depend on disabled plugins are commented out
 - **Plugin checker** - Disabled to prevent network calls on startup
 
 ## What's Enabled
 
 - **lazy.nvim** - Plugin manager is available for future use
 - **Catppuccin theme** - Beautiful color scheme for better visual experience
+- **Telescope** - Powerful fuzzy finder for files, buffers, and more
 - **Basic Neovim functionality** - All core features work normally
 - **Window and tab management** - Split, resize, navigate windows and tabs
 - **Text editing operations** - Duplicate, move, indent text
@@ -20,6 +21,21 @@ This is a minimal Neovim configuration optimized for remote development performa
 - **Essential keybindings** - All mappings that don't depend on plugins
 
 ## Keybindings
+
+### Fuzzy Search (Telescope)
+- `<leader>sf` - Find files (including hidden files, respects gitignore)
+- `<leader><leader>` - Find existing buffers
+- `<leader>s.` - Search recent files
+- `<leader>sh` - Search help tags
+- `<leader>sk` - Search keymaps
+- `<leader>ss` - Search telescope pickers
+- `<leader>sw` - Search current word
+- `<leader>sg` - Live grep
+- `<leader>sd` - Search diagnostics
+- `<leader>sr` - Resume last search
+- `<leader>/` - Fuzzy search in current buffer
+- `<leader>s/` - Live grep in open files
+- `<leader>sn` - Search Neovim config files
 
 ### Window Management
 - `<leader>sv` - Split window vertically
@@ -54,8 +70,8 @@ To test this configuration:
 
 1. Start Neovim: `nvim`
 2. Check startup time: `:startuptime`
-3. Verify lazy.nvim is loaded: `:lua print(package.loaded.lazy ~= nil)`
-4. Check theme is loaded: `:lua print(pcall(require, 'catppuccin'))`
+3. Verify telescope is loaded: `:lua print(pcall(require, 'telescope'))`
+4. Test file search: `<leader>sf`
 5. View installed plugins: `:Lazy`
 
 ## Adding More Plugins
@@ -69,22 +85,23 @@ To add additional plugins for local development:
 ## Performance Benefits
 
 This setup provides:
-- **Fast startup** - Only lazy.nvim and theme plugin load
+- **Fast startup** - Only essential plugins load
 - **Low memory usage** - Minimal plugin overhead
 - **No network calls** - Plugin checker disabled
 - **Stable performance** - No background plugin processes
 - **Beautiful UI** - Catppuccin theme for better visual experience
+- **Productive search** - Telescope for fast file and content finding
 - **Easy to extend** - Plugin manager ready for future use
 
 ## File Structure
 
 ```
 .config/nvim/
-├── init.lua                    # Main entry point (lazy.nvim enabled)
+├── init.lua                    # Main entry point (essential plugins enabled)
 ├── lua/
 │   └── config/
 │       ├── options.lua         # Basic Neovim options
 │       ├── keymaps.lua         # Keybindings (plugin ones commented)
-│       └── lazy.lua           # Plugin manager (theme enabled)
-└── plugins/                    # Plugin configurations (only colorscheme loaded)
+│       └── lazy.lua           # Plugin manager (essential plugins)
+└── plugins/                    # Plugin configurations (colorscheme + telescope loaded)
 ``` 

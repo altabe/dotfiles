@@ -25,7 +25,8 @@ vim.g.maplocalleader = "\\"
 require("lazy").setup({
   spec = {
     -- Only essential plugins for remote development
-    { import = "plugins.colorscheme" }, -- Theme only
+    { import = "plugins.colorscheme" }, -- Theme
+    { import = "plugins.telescope" }, -- Fuzzy finder
     -- { import = "plugins" }, -- DISABLED: Other plugins for remote performance
   },
   -- Configure any other settings here. See the documentation for more details.
