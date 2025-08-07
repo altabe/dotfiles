@@ -44,6 +44,28 @@ return { -- Fuzzy Finder (files, lsp, etc)
 
     -- [[ Configure Telescope ]]
     -- See `:help telescope` and `:help telescope.setup()`
+    -- Custom function to focus preview window
+    local focus_preview = function(prompt_bufnr)
+      local action_state = require("telescope.actions.state")
+      local picker = action_state.get_current_picker(prompt_bufnr)
+      local prompt_win = picker.prompt_win
+      local previewer = picker.previewer
+      local winid = previewer.state.winid
+      local bufnr = previewer.state.bufnr
+      
+      -- Add Tab mapping to switch back to prompt
+      vim.keymap.set("n", "<Tab>", function()
+        vim.cmd(string.format("noautocmd lua vim.api.nvim_set_current_win(%s)", prompt_win))
+      end, { buffer = bufnr })
+      
+      -- Add Escape mapping to close telescope (same as prompt buffer)
+      vim.keymap.set("n", "<Esc>", function()
+        require("telescope.actions").close(prompt_bufnr)
+      end, { buffer = bufnr })
+      
+      vim.cmd(string.format("noautocmd lua vim.api.nvim_set_current_win(%s)", winid))
+    end
+
     -- Simplified configuration to avoid input issues
     -- Check if ripgrep is available for better file finding
     -- Optimized for remote development performance
@@ -70,8 +92,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
         mappings = {
           i = {
             ['<c-l>'] = require('telescope.actions').to_fuzzy_refine,
-            -- Removed focus_preview to avoid input issues
-            -- Temporarily disable all insert mode mappings to debug "AA" issue
+            ['<Tab>'] = focus_preview,
           },
         },
         initial_mode = "insert",
