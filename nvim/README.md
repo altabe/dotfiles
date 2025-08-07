@@ -102,6 +102,11 @@ The configuration includes several optimizations:
 - **Optimized telescope layout** - Horizontal layout for better performance
 - **Lazy redraw** - Don't redraw during macro execution
 - **Hidden buffers** - Don't unload buffers when abandoned
+- **Remote detection** - Automatically applies more aggressive optimizations when working remotely
+- **Limited search depth** - Telescope searches limited to 10 levels deep for faster results
+- **Reduced preview timeout** - Faster preview generation in telescope
+- **Shell optimizations** - Optimized shell command execution
+- **Disabled mouse/cursor features** - Reduces rendering overhead over remote connections
 
 ## File Structure
 

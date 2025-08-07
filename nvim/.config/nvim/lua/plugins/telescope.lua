@@ -58,17 +58,20 @@ return { -- Fuzzy Finder (files, lsp, etc)
       -- api.nvim_set_current_win(winid)
     end
     -- Check if ripgrep is available for better file finding
+    -- Optimized for remote development performance
     local find_command = vim.fn.executable("rg") == 1 and {
       "rg",
       "--files",
       "--hidden",
       "--follow",
       "--glob", "!.git/*",
+      "--max-depth", "10", -- Limit depth for faster searching
     } or {
       "find",
       ".",
       "-type", "f",
       "-not", "-path", "./.git/*",
+      "-maxdepth", "10", -- Limit depth for faster searching
     }
 
     require("telescope").setup({
@@ -88,7 +91,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
           -- Only ignore files that are explicitly ignored by git
         },
         find_command = find_command,
-        -- Performance optimizations
+        -- Performance optimizations for remote development
         layout_strategy = "horizontal",
         layout_config = {
           horizontal = {
@@ -97,10 +100,15 @@ return { -- Fuzzy Finder (files, lsp, etc)
             results_width = 0.8,
           },
         },
-        -- Faster preview
+        -- Faster preview with reduced timeout
         preview = {
-          timeout = 100,
+          timeout = 50, -- Reduced from 100ms for faster response
         },
+        -- Limit results for faster display
+        results_height = 20,
+        -- Disable some features for better performance
+        disable_devicons = false, -- Keep icons but they're cached
+        use_less = false, -- Don't use less for paging
       },
       pickers = {
         find_files = {
