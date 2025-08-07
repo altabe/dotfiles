@@ -27,6 +27,9 @@ require("lazy").setup({
     -- Only essential plugins for remote development
     { import = "plugins.colorscheme" }, -- Theme
     { import = "plugins.telescope" }, -- Fuzzy finder
+    { import = "plugins.treesitter" }, -- Code parsing and navigation
+    { import = "plugins.lsp" }, -- Language Server Protocol for Python
+    { import = "plugins.nvim-cmp" }, -- Autocompletion
     -- { import = "plugins" }, -- DISABLED: Other plugins for remote performance
   },
   -- Configure any other settings here. See the documentation for more details.

@@ -64,6 +64,11 @@ return {
 
 				-- Find references for the word under your cursor.
 				map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+				
+				-- Alternative reference finder (direct LSP method - no telescope)
+				map("<leader>rr", function()
+					vim.lsp.buf.references()
+				end, "[R]eferences [R]eferences (direct LSP)")
 
 				-- Jump to the implementation of the word under your cursor.
 				--  Useful when your language has ways of declaring types without an actual implementation.
@@ -159,7 +164,6 @@ return {
 		local servers = {
 			-- clangd = {},
 			-- gopls = {},
-			-- pyright = {},
 			-- rust_analyzer = {},
 			-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
 			--
@@ -168,7 +172,19 @@ return {
 			--
 			-- But for many setups, the LSP (`ts_ls`) will work just fine
 			-- ts_ls = {},
-			--
+
+			-- Python LSP servers
+			pyright = {
+				settings = {
+					Python = {
+						analysis = {
+							autoSearchPaths = true,
+							useLibraryCodeForTypes = true,
+							diagnosticMode = "workspace",
+						},
+					},
+				},
+			},
 
 			lua_ls = {
 				-- cmd = {...},
@@ -199,6 +215,8 @@ return {
 		local ensure_installed = vim.tbl_keys(servers or {})
 		vim.list_extend(ensure_installed, {
 			"stylua", -- Used to format Lua code
+			"black", -- Used to format Python code
+			"ruff", -- Python linter and formatter
 		})
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 

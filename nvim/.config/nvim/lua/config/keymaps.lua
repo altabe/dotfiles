@@ -87,6 +87,20 @@ vim.keymap.set(
 -- vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
 -- vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 
+---------- TreeSitter Navigation (ENABLED) ----------
+
+-- TreeSitter provides enhanced syntax highlighting and parsing
+-- For Python navigation, TreeSitter enables better code understanding
+-- Note: For full "go to definition" functionality, you'll want to add LSP later
+-- TreeSitter text objects are configured in the plugin itself
+-- Key mappings for TreeSitter text objects:
+--   af/if - select outer/inner function
+--   ac/ic - select outer/inner class  
+--   am/im - select outer/inner function (alternative)
+--   as/is - select outer/inner scope
+--   ]m/[m - jump to next/previous function
+--   ]]/[[ - jump to next/previous class
+
 ---------- Basic Keymaps ----------
 
 -- Clear highlights on search when pressing <Esc> in normal mode

@@ -13,6 +13,9 @@ This is a minimal Neovim configuration optimized for remote development performa
 - **lazy.nvim** - Plugin manager is available for future use
 - **Catppuccin theme** - Beautiful color scheme for better visual experience
 - **Telescope** - Powerful fuzzy finder for files, buffers, and more
+- **TreeSitter** - Advanced code parsing and syntax highlighting
+- **LSP** - Language Server Protocol for Python (go to definition, find references, etc.)
+- **Autocompletion** - Intelligent code completion with nvim-cmp
 - **Basic Neovim functionality** - All core features work normally
 - **Window and tab management** - Split, resize, navigate windows and tabs
 - **Text editing operations** - Duplicate, move, indent text
@@ -36,6 +39,33 @@ This is a minimal Neovim configuration optimized for remote development performa
 - `<leader>/` - Fuzzy search in current buffer
 - `<leader>s/` - Live grep in open files
 - `<leader>sn` - Search Neovim config files
+
+### Code Navigation (TreeSitter + LSP)
+- `gd` - Go to definition (works across modules and imports)
+- `gr` - Find references
+- `gI` - Go to implementation
+- `gD` - Go to declaration
+- `<leader>D` - Type definition
+- `<leader>ds` - Document symbols
+- `<leader>ws` - Workspace symbols
+- `<leader>rn` - Rename symbol
+- `<leader>ca` - Code actions
+- `<leader>th` - Toggle inlay hints
+
+### Autocompletion (nvim-cmp)
+- `<C-n>/<C-p>` - Navigate completion menu
+- `<C-y>/<CR>/<Tab>` - Accept completion
+- `<C-b>/<C-f>` - Scroll documentation
+- `<A-Space>` - Trigger completion
+- `<C-l>/<C-h>` - Navigate snippets
+
+### TreeSitter Text Objects
+- `af/if` - Select outer/inner function
+- `ac/ic` - Select outer/inner class
+- `am/im` - Select outer/inner function (alternative)
+- `as/is` - Select outer/inner scope
+- `]m/[m` - Jump to next/previous function
+- `]]/[[]` - Jump to next/previous class
 
 ### Window Management
 - `<leader>sv` - Split window vertically
