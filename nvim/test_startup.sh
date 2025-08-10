@@ -6,8 +6,8 @@ echo "Testing Neovim startup performance..."
 echo "====================================="
 
 # Test basic startup time
-echo "1. Basic startup time:"
-time nvim --headless -c "quit" 2>/dev/null
+echo "1. Clean startup time:"
+time nvim --clean --headless -c "quit" 2>/dev/null
 
 echo -e "\n2. Startup with plugins:"
 time nvim --headless -c "lua print('Plugins loaded')" -c "quit" 2>/dev/null
