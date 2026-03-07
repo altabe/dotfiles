@@ -13,3 +13,4 @@ eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
 # eval "$(oh-my-posh init zsh)"
 source <(fzf --zsh)
 
+export PATH="$HOME/.local/bin:$PATH"

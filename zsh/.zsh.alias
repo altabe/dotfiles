@@ -1,5 +1,5 @@
 alias sa="source ~/.zsh.alias"
-alias ea="nvim ~/.zsh.alias"
+alias ea="vim ~/.zsh.alias"
 alias nv="nvim"
 
 repos="~/repos/"
@@ -40,3 +40,6 @@ alias pip='pip3 --require-virtualenv'
 
 # kitty
 alias icat='kitten icat'
+
+#claude
+alias cld='claude --dangerously-skip-permissions'
