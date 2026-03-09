@@ -1,5 +1,11 @@
 source ~/.zsh.alias
 
+# History
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt SHARE_HISTORY
+
 bindkey '\e[H' beginning-of-line
 bindkey '\e[F' end-of-line
 bindkey '^P' history-search-backward
@@ -14,3 +20,6 @@ eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
 source <(fzf --zsh)
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# Kubectl aliases
+[[ -f ~/.kubectl_aliases ]] && source ~/.kubectl_aliases

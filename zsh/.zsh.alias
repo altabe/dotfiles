@@ -1,3 +1,4 @@
+alias sorc="source ~/.zshrc"
 alias sa="source ~/.zsh.alias"
 alias ea="vim ~/.zsh.alias"
 alias nv="nvim"
