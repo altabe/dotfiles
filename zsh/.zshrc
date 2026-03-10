@@ -13,6 +13,14 @@ bindkey '\e[4~' end-of-line
 bindkey '^P' history-search-backward
 bindkey '^N' history-search-forward
 
+# Alt+arrows and Alt+backspace (word navigation with slash as separator)
+WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+bindkey '\e[1;3D' backward-word
+bindkey '\e[1;3C' forward-word
+bindkey '\eb' backward-word
+bindkey '\ef' forward-word
+bindkey '\e^?' backward-kill-word
+
 # Oh my posh
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/catpuccin.omp.json)"
 eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
