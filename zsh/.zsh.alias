@@ -44,3 +44,7 @@ alias icat='kitten icat'
 
 #claude
 alias cld='claude --dangerously-skip-permissions'
+
+# gcs
+alias gls='gsutil ls'
+alias gcp='gsutil cp'
