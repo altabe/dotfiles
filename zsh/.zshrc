@@ -33,3 +33,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Kubectl aliases
 [[ -f ~/.kubectl_aliases ]] && source ~/.kubectl_aliases
+
+# The next line updates PATH for Nebius CLI.
+if [ -f '/Users/tomerbenaltabe/.nebius/path.zsh.inc' ]; then source '/Users/tomerbenaltabe/.nebius/path.zsh.inc'; fi
