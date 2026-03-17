@@ -1063,5 +1063,10 @@
     {
         "key": "ctrl+shift+x",
         "command": "workbench.view.extensions"
+    },
+    {
+        "key": "escape",
+        "command": "closeMarkersNavigation",
+        "when": "editorFocus && markersNavigationVisible"
     }
 ]

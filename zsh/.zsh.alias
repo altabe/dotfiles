@@ -30,6 +30,9 @@ alias ret2='cat /tmp/autocapture2.txt'
 alias hfc='fc -ln 1 | sort | uniq | fzf | cap'
 alias hfc2='fc -ln 1 | uniq | sort | fzf | cap2'
 
+# search aliases + functions
+fa() { { alias; typeset -f } | rg "$1" }
+
 # git
 alias lg='lazygit'
 alias gsu='git status -uno'
