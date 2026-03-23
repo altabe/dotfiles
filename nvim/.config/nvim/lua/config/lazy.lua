@@ -30,6 +30,7 @@ require("lazy").setup({
     { import = "plugins.treesitter" }, -- Code parsing and navigation
     { import = "plugins.lsp" }, -- Language Server Protocol for Python
     { import = "plugins.nvim-cmp" }, -- Autocompletion
+    { import = "plugins.markdown-preview" }, -- Markdown preview in browser
     -- { import = "plugins" }, -- DISABLED: Other plugins for remote performance
   },
   -- Configure any other settings here. See the documentation for more details.
