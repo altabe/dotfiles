@@ -6,8 +6,11 @@ URL_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Matches shorter than this get a single hint; longer ones get dual hints
+MIN_DUAL_LENGTH = 15
+
+
 def mark(text, args, Mark, extra_cli_args, *a):
-    print(Mark)
     matches = list(URL_RE.finditer(text))
 
     # Exactly one URL → auto-open
@@ -16,11 +19,19 @@ def mark(text, args, Mark, extra_cli_args, *a):
         open_url(m.group(1))
 
         # Zero-width dummy mark to suppress "no matches found"
-        return [Mark(m.start(1), m.start(1), '', {})]
+        return [Mark(0, m.start(1), m.start(1), '', {})]
 
-    # Multiple URLs → normal hints UI
-    return [
-        Mark(m.start(1), m.end(1), m.group(1), {})
-        for m in matches
-    ]
-
+    # Multiple URLs → dual hints for long ones
+    marks = []
+    idx = 0
+    for m in matches:
+        start, end = m.start(1), m.end(1)
+        url = m.group(1)
+        if len(url) < MIN_DUAL_LENGTH:
+            marks.append(Mark(idx, start, end, url, {}))
+            idx += 1
+        else:
+            marks.append(Mark(idx, start, start + 1, url, {}))
+            marks.append(Mark(idx, end - 1, end, url, {}))
+            idx += 1
+    return marks
