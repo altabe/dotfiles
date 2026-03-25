@@ -31,11 +31,12 @@ alias hfc='fc -ln 1 | sort | uniq | fzf | cap'
 alias hfc2='fc -ln 1 | uniq | sort | fzf | cap2'
 
 # search aliases + functions
-fa() { { alias; typeset -f } | rg "$1" }
+fa() { alias | rg "$1"; typeset -f | awk "/^$1/,/^\}/" }
 
 # git
 alias lg='lazygit'
 alias gsu='git status -uno'
+gfm() { git fetch origin "$1" && git merge "origin/$1" }
 
 #python
 alias python='python3'
@@ -47,6 +48,9 @@ alias icat='kitten icat'
 
 #claude
 alias cld='claude --dangerously-skip-permissions'
+
+# choose lines by number, e.g.: chl 3 7 10
+chl() { awk -v lines="$*" 'BEGIN{split(lines,a)} {for(i in a) if(NR==a[i]) print}' ; }
 
 # gcs
 alias gls='gsutil ls'
