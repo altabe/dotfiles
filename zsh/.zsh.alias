@@ -60,4 +60,4 @@ alias gcp='gsutil cp'
 # k8s
 alias kc='kubectl'
 alias tpod='kubectl get pods --sort-by=.metadata.creationTimestamp | rg training-0-0 | tail -1 | choose 0'
-alias tlogs='tpod | xargs kubectl logs -f'
+alias tlogs='tpod | xargs kubectl logs -f | tee /tmp/tlogs.log'
