@@ -47,6 +47,7 @@ alias pip='pip3 --require-virtualenv'
 alias icat='kitten icat'
 
 #claude
+alias claude='claude --verbose --effort max'
 alias cld='claude --dangerously-skip-permissions'
 
 # choose lines by number, e.g.: chl 3 7 10
