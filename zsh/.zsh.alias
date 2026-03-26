@@ -1,6 +1,6 @@
 alias sorc="source ~/.zshrc"
 alias sa="source ~/.zsh.alias"
-alias ea="vim ~/.zsh.alias"
+alias ea="nvim ~/.zsh.alias"
 alias nv="nvim"
 
 repos="~/repos/"
@@ -56,3 +56,8 @@ chl() { awk -v lines="$*" 'BEGIN{split(lines,a)} {for(i in a) if(NR==a[i]) print
 # gcs
 alias gls='gsutil ls'
 alias gcp='gsutil cp'
+
+# k8s
+alias kc='kubectl'
+alias tpod='kubectl get pods --sort-by=.metadata.creationTimestamp | rg training-0-0 | tail -1 | choose 0'
+alias tlogs='tpod | xargs kubectl logs -f'
