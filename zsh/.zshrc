@@ -34,5 +34,9 @@ export PATH="$HOME/.local/bin:$PATH"
 # Kubectl aliases
 [[ -f ~/.kubectl_aliases ]] && source ~/.kubectl_aliases
 
+# Claude sound toggle
+alias son='jq ".hooks.Stop = [{matcher:\"\",hooks:[{type:\"command\",command:\"afplay /System/Library/Sounds/Glass.aiff\"}]}] | .hooks.Notification = [{matcher:\"\",hooks:[{type:\"command\",command:\"afplay /System/Library/Sounds/Glass.aiff\"}]}]" ~/.claude/settings.json > /tmp/cs.json && mv /tmp/cs.json ~/.claude/settings.json'
+alias soff='jq "del(.hooks.Stop) | del(.hooks.Notification)" ~/.claude/settings.json > /tmp/cs.json && mv /tmp/cs.json ~/.claude/settings.json'
+
 # The next line updates PATH for Nebius CLI.
 if [ -f '/Users/tomerbenaltabe/.nebius/path.zsh.inc' ]; then source '/Users/tomerbenaltabe/.nebius/path.zsh.inc'; fi
