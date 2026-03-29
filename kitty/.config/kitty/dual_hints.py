@@ -8,6 +8,8 @@ MIN_DUAL_LENGTH = 15
 MIN_MATCH_LENGTH = 2
 # Kitty uses lowercase alphabet for hint labels
 ALPHABET_SIZE = 26
+# Tmux pane border characters (single, double, heavy)
+BORDER_CHARS = frozenset('│║┃')
 
 
 def _is_safe(ch):
@@ -39,6 +41,30 @@ def _sanitize(text):
     return ''.join(ch if _is_safe(ch) else ' ' for ch in text)
 
 
+def _split_at_borders(text, start, end):
+    """Split a match at tmux pane border characters, trimming whitespace."""
+    segments = []
+    seg_start = start
+    for i in range(start, end):
+        if text[i] in BORDER_CHARS:
+            segments.append((seg_start, i))
+            seg_start = i + 1
+    segments.append((seg_start, end))
+
+    result = []
+    for s, e in segments:
+        while s < e and text[s] in ' \t':
+            s += 1
+        while e > s and text[e - 1] in ' \t':
+            e -= 1
+        if s >= e:
+            continue
+        content = text[s:e].replace('\n', '').replace('\r', '').replace('\0', '')
+        if content and len(content) >= MIN_MATCH_LENGTH:
+            result.append((s, e, content))
+    return result
+
+
 def _hint_label_length(num_hints):
     """How many characters kitty needs per hint label."""
     if num_hints <= 0:
@@ -59,6 +85,10 @@ def mark(text, args, Mark, extra_cli_args, *a):
     for m in re.finditer(pattern, clean, re.MULTILINE):
         grp = 1 if m.lastindex and m.lastindex >= 1 else 0
         start, end = m.start(grp), m.end(grp)
+        # Split at tmux pane borders if present in original text
+        if any(text[i] in BORDER_CHARS for i in range(start, end)):
+            raw.extend(_split_at_borders(text, start, end))
+            continue
         matched = text[start:end].replace('\n', '').replace('\r', '').replace('\0', '')
         if not matched or len(matched) < MIN_MATCH_LENGTH:
             continue
