@@ -57,6 +57,10 @@ chl() { awk -v lines="$*" 'BEGIN{split(lines,a)} {for(i in a) if(NR==a[i]) print
 alias gls='gsutil ls'
 alias gcp='gsutil cp'
 
+# process
+pgx() { pgrep -x "$1" | xargs ps -p; }
+alias pk='pkill -x'
+
 # k8s
 alias kc='kubectl'
 alias tpod='kubectl get pods --sort-by=.metadata.creationTimestamp | rg training-0-0 | tail -1 | choose 0'
