@@ -24,6 +24,16 @@ bindkey '\e^?' backward-kill-word
 # Oh my posh
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/catpuccin.omp.json)"
 eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
+
+# Alternating background between commands
+__cmd_bg_toggle=0
+_cmd_bg_start() {
+  (( __cmd_bg_toggle = 1 - __cmd_bg_toggle ))
+  (( __cmd_bg_toggle )) && printf '\e[48;2;80;82;108m'
+}
+_cmd_bg_reset() { printf '\e[49m' }
+precmd_functions=(${precmd_functions:#_cmd_bg_reset} _cmd_bg_reset)
+preexec_functions=(${preexec_functions:#_cmd_bg_start} _cmd_bg_start)
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/orig_config.toml)"
 # eval "$(oh-my-posh init zsh --config $(brew --prefix oh-my-posh)/themes/jandedobbeleer.omp.json)"
 # eval "$(oh-my-posh init zsh)"
