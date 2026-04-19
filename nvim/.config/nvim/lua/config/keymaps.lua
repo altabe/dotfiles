@@ -1,14 +1,22 @@
 -- window management
-vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" }) -- split window vertically
-vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" }) -- split window horizontally
-vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" }) -- make split windows equal width & height
-vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" }) -- close current split window
+vim.keymap.set("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })
+vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
+vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" })
+vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split" })
 
 vim.keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
 vim.keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
 vim.keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
 vim.keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
 vim.keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
+
+-- save / close
+vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { desc = "Save file" })
+vim.keymap.set("n", "<leader>q", "<cmd>bd<CR>", { desc = "Close buffer" })
+
+-- buffer navigation
+vim.keymap.set("n", "_", "<cmd>bprevious<CR>", { desc = "Previous buffer" })
+vim.keymap.set("n", "+", "<cmd>bnext<CR>", { desc = "Next buffer" })
 
 ---- navigation
 -- line navigation
@@ -18,6 +26,8 @@ vim.keymap.set({ "n", "v", "o" }, "H", "^")
 --  See `:help wincmd` for a list of all window commands
 vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
 vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
+vim.keymap.set("n", "<leader>h", "<C-w><C-h>", { desc = "Move focus to the left window" })
+vim.keymap.set("n", "<leader>l", "<C-w><C-l>", { desc = "Move focus to the right window" })
 -- the following keys are not relevant since I mapped C-j and C-k to C-n and C-p respectively at the terminal level in kitty.conf
 -- vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to the lower window" })
 -- vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper window" })
@@ -56,11 +66,11 @@ vim.keymap.set({ "n", "v" }, "X", '"x')
 ---------- UI ----------
 vim.keymap.set(
   'n',
-  '<leader>ud',
+  '<leader>d',
   function()
     vim.diagnostic.enable(not vim.diagnostic.is_enabled())
   end,
-  { silent = true, noremap = true, desc = "[U]I Toggle [D]iagnostics"}
+  { silent = true, noremap = true, desc = "Toggle [D]iagnostics"}
 )
 
 ---------- Plugins (DISABLED FOR REMOTE PERFORMANCE) ----------
@@ -108,7 +118,7 @@ vim.keymap.set(
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
 -- Diagnostic keymaps
-vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+vim.keymap.set("n", "<leader>e", vim.diagnostic.setloclist, { desc = "Open diagnostic [E]rrors list" })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
