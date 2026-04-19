@@ -48,7 +48,7 @@ alias icat='kitten icat'
 
 #claude
 alias claude='claude --verbose --effort max'
-alias cld='claude --dangerously-skip-permissions'
+alias cld='claude --enable-auto-mode'
 
 # choose lines by number, e.g.: chl 3 7 10
 chl() { awk -v lines="$*" 'BEGIN{split(lines,a)} {for(i in a) if(NR==a[i]) print}' ; }
