@@ -65,3 +65,36 @@ alias pk='pkill -x'
 alias kc='kubectl'
 alias tpod='kubectl get pods --sort-by=.metadata.creationTimestamp | rg training-0-0 | tail -1 | choose 0'
 alias tlogs='tpod | xargs kubectl logs -f | tee /tmp/tlogs.log'
+kgpus() {
+  local tmp
+  tmp=$(mktemp -d) || return
+  echo "Context: $(kubectl config current-context 2>/dev/null || echo unknown)"
+  kubectl get nodes -o json > "$tmp/nodes.json" || { rm -rf "$tmp"; return 1; }
+  kubectl get pods --all-namespaces -o json > "$tmp/pods.json" || { rm -rf "$tmp"; return 1; }
+  jq -n --slurpfile nodes "$tmp/nodes.json" --slurpfile pods "$tmp/pods.json" -r '
+    ($pods[0].items
+      | map(select((.status.phase == "Running" or .status.phase == "Pending") and .spec.nodeName))
+      | map({
+          node: .spec.nodeName,
+          req: ([.spec.containers[].resources.requests["nvidia.com/gpu"] // "0" | tonumber] | add)
+        })
+      | group_by(.node)
+      | map({key: .[0].node, value: (map(.req) | add)})
+      | from_entries) as $used
+    | $nodes[0].items
+    | map({
+        name: .metadata.name,
+        cap: (.status.allocatable["nvidia.com/gpu"] // "0" | tonumber)
+      })
+    | map(. + {used: ($used[.name] // 0)})
+    | map(. + {free: (.cap - .used)})
+    | map(select(.cap > 0)) as $gpu
+    | ($gpu | map(.cap)  | add // 0) as $tcap
+    | ($gpu | map(.free) | add // 0) as $tfree
+    | ($gpu | length) as $tnodes
+    | ($gpu | map(select(.free > 0)) | length) as $fnodes
+    | "GPU nodes: \($fnodes)/\($tnodes) free\nGPUs: \($tfree)/\($tcap) free"
+  '
+  rm -rf "$tmp"
+}
+
