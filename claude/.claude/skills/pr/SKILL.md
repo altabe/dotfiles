@@ -52,7 +52,12 @@ would bias the review.
 Only after Phase 1 is complete, fetch the PR's existing comments and review
 threads — both from human colleagues and from code-review bots.
 
-Review the comments themselves: for each substantive comment, state whether
+Skip resolved threads entirely — do not review, summarize, or mention them.
+Note that thread resolution is not in `gh pr view --json comments`; get
+`isResolved` per thread from the GraphQL API (`gh api graphql` querying the
+pull request's `reviewThreads`).
+
+Review the remaining comments themselves: for each substantive comment, state whether
 you agree or disagree and why, whether it's already addressed, whether it's a
 false positive (common with bots), and what you'd recommend the PR author do
 about it. Note any comment that overlaps with a Phase 1 finding.
