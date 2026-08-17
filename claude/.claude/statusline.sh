@@ -7,6 +7,7 @@ fi
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // .model.id // empty')
 EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
+SID=$(echo "$input" | jq -r '.session_id // empty' | cut -c1-8)
 
 BRANCH=$(git -C "$DIR" branch --show-current 2>/dev/null)
 if [ -n "$BRANCH" ]; then
@@ -22,6 +23,10 @@ if [ -n "$EFFORT" ]; then
   else
     TAG="$EFFORT"
   fi
+fi
+
+if [ -n "$SID" ]; then
+  LOC="$LOC · $SID"
 fi
 
 if [ -n "$TAG" ]; then
