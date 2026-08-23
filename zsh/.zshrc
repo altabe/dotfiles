@@ -21,6 +21,24 @@ bindkey '\eb' backward-word
 bindkey '\ef' forward-word
 bindkey '\e^?' backward-kill-word
 
+# Completion
+autoload -Uz compinit
+zmodload zsh/complist
+# Full fpath rescan at most once a day; otherwise trust the cached dump (-C)
+if [[ -n $HOME/.zcompdump(#qN.mh-24) ]]; then
+  compinit -C
+else
+  compinit
+fi
+zstyle ':completion:*' menu select                                # arrow-key menu on Tab
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}' 'r:|[._-]=* r:|=*'  # case-insensitive + partial-word
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path ~/.cache/zsh/compcache
+bindkey -M menuselect '^[[Z' reverse-menu-complete                # Shift-Tab goes backward
+
 # Oh my posh
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/catpuccin.omp.json)"
 eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
