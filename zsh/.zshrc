@@ -30,6 +30,29 @@ eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
 # eval "$(oh-my-posh init zsh)"
 source <(fzf --zsh)
 
+# zoxide: frecency-ranked cd. `cd gitop` jumps to the best-ranked dir whose
+# path contains "gitop". When zoxide's substring matcher finds nothing (e.g.
+# `cd cfel` for corma-fellowship), fall back to fzf fuzzy-matching over the
+# whole zoxide db. Every cd (builtin included) feeds the db via zoxide's
+# chpwd hook.
+eval "$(zoxide init zsh)"
+cd() {
+  if [[ $# -eq 0 || -d $1 || $1 == -* ]]; then
+    builtin cd "$@"
+    return
+  fi
+  __zoxide_z "$@" 2>/dev/null && return
+  # --list is frecency-ordered and --no-sort preserves that order, so this
+  # picks the most-frecent dir among the fuzzy matches.
+  local dir
+  dir=$(zoxide query --list | fzf --filter "$*" --no-sort | head -1)
+  if [[ -n $dir ]]; then
+    builtin cd "$dir"
+  else
+    builtin cd "$@"  # surface the normal "no such file or directory" error
+  fi
+}
+
 export PATH="$HOME/.local/bin:$PATH"
 
 # Kubectl aliases
