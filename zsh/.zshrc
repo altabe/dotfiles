@@ -71,6 +71,9 @@ cd() {
   fi
 }
 
+# Ghost-text suggestions from history as you type; accept with → (or Alt-f per word)
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
 export PATH="$HOME/.local/bin:$PATH"
 
 # Kubectl aliases
