@@ -89,6 +89,7 @@ return { -- Autocompletion
 				--
 				-- <c-l> will move you to the right of each of the expansion locations.
 				-- <c-h> is similar, except moving you backwards.
+				-- TODO: C-l and C-h never reach nvim — kitty.conf maps them to left/right arrows; rebind these snippet jumps
 				["<C-l>"] = cmp.mapping(function()
 					if luasnip.expand_or_locally_jumpable() then
 						luasnip.expand_or_jump()

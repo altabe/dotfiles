@@ -24,6 +24,7 @@ vim.keymap.set({ "n", "v", "o" }, "L", "$")
 vim.keymap.set({ "n", "v", "o" }, "H", "^")
 -- splits
 --  See `:help wincmd` for a list of all window commands
+-- TODO: C-h and C-l are shadowed by kitty.conf mapping them to left/right arrows (like C-j/C-k below); use <leader>h/<leader>l meanwhile
 vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
 vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
 vim.keymap.set("n", "<leader>h", "<C-w><C-h>", { desc = "Move focus to the left window" })

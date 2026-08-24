@@ -91,6 +91,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
       defaults = {
         mappings = {
           i = {
+            -- TODO: c-l never reaches nvim — kitty.conf maps it to the right arrow; rebind fuzzy refine
             ['<c-l>'] = require('telescope.actions').to_fuzzy_refine,
             ['<Tab>'] = focus_preview,
           },
