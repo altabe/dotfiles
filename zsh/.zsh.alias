@@ -10,6 +10,10 @@ alias nvc="cd $repos/dotfiles/nvim/.config/nvim"
 alias l="ls -l"
 alias la="ls -la"
 
+# ssh override: drop the host's old known_hosts key, then connect (for re-provisioned VMs)
+# usage: ssho [user@]host [ssh args...]
+ssho() { ssh-keygen -R "${1#*@}" && ssh "$@" }
+
 # tmux
 alias ta="tmux a"
 alias tk="tmux kill-session -t"
