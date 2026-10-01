@@ -73,6 +73,7 @@ vim.keymap.set(
   end,
   { silent = true, noremap = true, desc = "Toggle [D]iagnostics"}
 )
+vim.keymap.set("n", "<leader>z", "<cmd>set wrap!<CR>", { desc = "Toggle line wrap" })
 
 ---------- Plugins (DISABLED FOR REMOTE PERFORMANCE) ----------
 
@@ -128,3 +129,16 @@ vim.keymap.set("n", "<leader>e", vim.diagnostic.setloclist, { desc = "Open diagn
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
+-- Copy current buffer's full path (and line number) to clipboard
+vim.api.nvim_create_user_command("CopyPath", function()
+  local path = vim.fn.expand("%:p")
+  vim.fn.setreg("+", path)
+  vim.notify("Copied: " .. path)
+end, { desc = "Copy full path of current buffer" })
+
+vim.api.nvim_create_user_command("CopyLine", function()
+  local path = vim.fn.expand("%:p") .. ":" .. vim.fn.line(".")
+  vim.fn.setreg("+", path)
+  vim.notify("Copied: " .. path)
+end, { desc = "Copy full path of current buffer with line number" })
