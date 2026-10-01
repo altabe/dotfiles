@@ -1,0 +1,42 @@
+# This is Git's per-user configuration file.
+[user]
+	email = tomer.benaltabe@corma-labs.com
+# Please adapt and uncomment the following lines:
+#	name = Tomer Ben Altabe
+#	email = tomer.altabe@gmail.com
+[push]
+	autoSetupRemote = true
+[pull]
+	rebase = false
+	ff = only
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+
+# --- delta: default pager for every diff/show/blame/add -p ---
+[include]
+	path = ~/.config/delta/catppuccin.gitconfig
+[core]
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	features = catppuccin-macchiato
+	line-numbers = true
+	navigate = true
+[diff]
+	colorMoved = default
+
+# --- difftastic: opt-in structural diff via `git dft` ---
+[diff]
+	tool = difftastic
+[difftool]
+	prompt = false
+[difftool "difftastic"]
+	cmd = difft "$LOCAL" "$REMOTE"
+[alias]
+	dft = difftool
+	dshow = "!f() { git -c diff.external=difft show --ext-diff \"$@\"; }; f"
+	dlog = "!f() { git -c diff.external=difft log -p --ext-diff \"$@\"; }; f"
