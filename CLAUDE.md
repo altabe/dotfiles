@@ -26,6 +26,8 @@ Each directory is a stow package — its contents get symlinked relative to `~`:
 - **kitty/** — Kitty terminal config at `.config/kitty/`. Custom kitten hint mappings for regex-based text selection.
 - **omp/** — Oh My Posh prompt theme at `.config/omp/`. TOML config with Catppuccin palette.
 - **git/** — `.gitconfig` plus delta's Catppuccin theme at `.config/delta/`. delta is the default pager; difftastic is opt-in via `git dft`.
+- **lazygit/** — lazygit config at `.config/lazygit/`. lazygit's default path on macOS is `~/Library/Application Support/lazygit`, so `.zshrc` exports `LG_CONFIG_FILE` to point here.
+- **git/** — `.gitconfig` plus delta's Catppuccin theme at `.config/delta/`. delta is the default pager; difftastic is opt-in via `git dft`.
 
 ## Neovim Config Architecture
 

@@ -40,7 +40,6 @@ zstyle ':completion:*' cache-path ~/.cache/zsh/compcache
 bindkey -M menuselect '^[[Z' reverse-menu-complete                # Shift-Tab goes backward
 
 # Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
-# Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 
 # Oh my posh
@@ -102,3 +101,6 @@ sws() {
   done
 }
 
+# lazygit reads ~/Library/Application Support/lazygit on macOS, which stow can't
+# target. Point it at the stowed config instead.
+export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"

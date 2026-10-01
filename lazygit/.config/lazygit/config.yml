@@ -1,0 +1,7 @@
+# Loaded via LG_CONFIG_FILE (set in .zshrc) — lazygit's default config path on
+# macOS is ~/Library/Application Support/lazygit, which stow can't target.
+git:
+  pagers:
+    - colorArg: always
+      # delta picks up [delta] features from ~/.gitconfig, so the theme follows.
+      pager: delta --dark --paging=never
