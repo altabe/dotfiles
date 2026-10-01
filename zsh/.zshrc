@@ -40,6 +40,7 @@ zstyle ':completion:*' cache-path ~/.cache/zsh/compcache
 bindkey -M menuselect '^[[Z' reverse-menu-complete                # Shift-Tab goes backward
 
 # Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
+# Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 
 # Oh my posh
@@ -86,3 +87,18 @@ alias soff='jq "del(.hooks.Stop) | del(.hooks.Notification)" ~/.claude/settings.
 
 # The next line updates PATH for Nebius CLI.
 if [ -f '/Users/tomerbenaltabe/.nebius/path.zsh.inc' ]; then source '/Users/tomerbenaltabe/.nebius/path.zsh.inc'; fi
+
+# Auto-reconnecting SSH to secure-workstation.
+# The AWS EC2 Instance Connect tunnel hard-caps every session at 1 hour, so this
+# re-dials on drop and re-attaches a persistent tmux session ("main") — your work
+# survives the reconnect. Detach with Ctrl-b d (or exit the shell) to stop cleanly.
+sws() {
+  while true; do
+    ssh -t secure-workstation 'tmux attach -t main || tmux new -s main'
+    local code=$?
+    [ $code -eq 0 ] && break   # clean detach/logout -> stop
+    echo "sws: tunnel dropped (exit $code) — reconnecting in 5s (Ctrl-C to stop)…"
+    sleep 5
+  done
+}
+
