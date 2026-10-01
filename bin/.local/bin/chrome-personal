@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Open a URL in the personal Chrome profile, regardless of the default browser.
+# Used as $BROWSER by `pcc` so Claude Code's /login OAuth flow lands on the
+# personal Google account instead of the work one.
+#
+# Profile 3 = tomerbenaltabe@gmail.com (personal). Chrome's profile *directory*
+# names are stable; the display name in the UI is not, so key off the dir.
+set -euo pipefail
+
+PROFILE_DIR="${CHROME_PERSONAL_PROFILE:-Profile 3}"
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+if [ ! -x "$CHROME" ]; then
+  echo "chrome-personal: Chrome not found at $CHROME" >&2
+  exit 1
+fi
+
+exec "$CHROME" --profile-directory="$PROFILE_DIR" "$@"

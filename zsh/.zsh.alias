@@ -2,10 +2,12 @@ alias sorc="source ~/.zshrc"
 alias sa="source ~/.zsh.alias"
 alias ea="nvim ~/.zsh.alias"
 alias nv="nvim"
+alias nvc="nvim --clean"
+alias xa="xargs"
+alias fsi="~/.local/bin/fix-secure-input"
 
 repos="~/repos/"
 alias dotf="cd $repos/dotfiles"
-alias nvc="cd $repos/dotfiles/nvim/.config/nvim"
 
 alias l="ls -l"
 alias la="ls -la"
@@ -51,8 +53,16 @@ alias pip='pip3 --require-virtualenv'
 alias icat='kitten icat'
 
 #claude
-alias claude='claude --verbose --effort max'
-alias cld='claude --enable-auto-mode'
+alias claude='claude --enable-auto-mode'
+alias cld='claude'
+alias cldr='claude --resume'
+alias cldm='claude --effort max'
+alias cldd='claude --dangerously-skip-permissions'
+
+# personal claude code: same as cld, but personal account + personal sessions.
+# ( ) not { } -- the export dies with the subshell, so it never leaks into this
+# shell and silently re-bills everything launched afterwards.
+pcc() ( export CLAUDE_CONFIG_DIR="$HOME/.claude-personal"; command claude --enable-auto-mode "$@" )
 
 # choose lines by number, e.g.: chl 3 7 10
 chl() { awk -v lines="$*" 'BEGIN{split(lines,a)} {for(i in a) if(NR==a[i]) print}' ; }
