@@ -39,6 +39,9 @@ zstyle ':completion:*' use-cache yes
 zstyle ':completion:*' cache-path ~/.cache/zsh/compcache
 bindkey -M menuselect '^[[Z' reverse-menu-complete                # Shift-Tab goes backward
 
+# Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
+
 # Oh my posh
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/catpuccin.omp.json)"
 eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
@@ -73,8 +76,6 @@ cd() {
 
 # Ghost-text suggestions from history as you type; accept with → (or Alt-f per word)
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-export PATH="$HOME/.local/bin:$PATH"
 
 # Kubectl aliases
 [[ -f ~/.kubectl_aliases ]] && source ~/.kubectl_aliases
