@@ -104,3 +104,6 @@ sws() {
 # lazygit reads ~/Library/Application Support/lazygit on macOS, which stow can't
 # target. Point it at the stowed config instead.
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
+
+# Machine-local, untracked config.
+[[ -f ~/.zsh.local ]] && source ~/.zsh.local
