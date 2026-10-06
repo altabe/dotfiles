@@ -1,9 +1,7 @@
 # This is Git's per-user configuration file.
 [user]
+	name = Tomer Ben Altabe
 	email = tomer.benaltabe@corma-labs.com
-# Please adapt and uncomment the following lines:
-#	name = Tomer Ben Altabe
-#	email = tomer.altabe@gmail.com
 [push]
 	autoSetupRemote = true
 [pull]
