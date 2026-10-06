@@ -85,7 +85,7 @@ alias son='jq ".hooks.Stop = [{matcher:\"\",hooks:[{type:\"command\",command:\"a
 alias soff='jq "del(.hooks.Stop) | del(.hooks.Notification)" ~/.claude/settings.json > /tmp/cs.json && mv /tmp/cs.json ~/.claude/settings.json'
 
 # The next line updates PATH for Nebius CLI.
-if [ -f '/Users/tomerbenaltabe/.nebius/path.zsh.inc' ]; then source '/Users/tomerbenaltabe/.nebius/path.zsh.inc'; fi
+if [ -f "$HOME/.nebius/path.zsh.inc" ]; then source "$HOME/.nebius/path.zsh.inc"; fi
 
 # Auto-reconnecting SSH to secure-workstation.
 # The AWS EC2 Instance Connect tunnel hard-caps every session at 1 hour, so this

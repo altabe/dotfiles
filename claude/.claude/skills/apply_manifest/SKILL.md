@@ -16,8 +16,8 @@ Interactively verify and apply a k8s-manifests config to a Kubernetes cluster on
 Parse the following from `$ARGUMENTS`:
 - **config_file** (optional): Path to a k8s-manifests config YAML. Can be:
   - An absolute path
-  - A relative path (resolve against cwd, then `/Users/tomerbenaltabe/repos/k8s-manifests/configs/`)
-  - A bare filename — search recursively under `/Users/tomerbenaltabe/repos/k8s-manifests/configs/`
+  - A relative path (resolve against cwd, then `~/repos/k8s-manifests/configs/`)
+  - A bare filename — search recursively under `~/repos/k8s-manifests/configs/`
 
 ## Verification Stages
 
@@ -31,8 +31,8 @@ Parse the following from `$ARGUMENTS`:
 
 Resolve the config path:
 1. If absolute path and exists, use it.
-2. If relative path, try as-is from cwd, then under `/Users/tomerbenaltabe/repos/k8s-manifests/configs/`.
-3. If bare filename, search recursively under `/Users/tomerbenaltabe/repos/k8s-manifests/configs/`. If multiple matches, show them and ask the user to pick.
+2. If relative path, try as-is from cwd, then under `~/repos/k8s-manifests/configs/`.
+3. If bare filename, search recursively under `~/repos/k8s-manifests/configs/`. If multiple matches, show them and ask the user to pick.
 
 Read the resolved config file.
 
@@ -66,7 +66,7 @@ If the config does not contain a `gpu_type` field, ask the user which GPU type t
 Use corma-cli to find zones and clusters with the GPU:
 
 ```bash
-uv run --project /Users/tomerbenaltabe/repos/corma-cli ccli gcp-get-dws-gpus --gpu <SHORT_GPU_NAME> --nodes 1
+uv run --project ~/repos/corma-cli ccli gcp-get-dws-gpus --gpu <SHORT_GPU_NAME> --nodes 1
 ```
 
 This queries zones, finds GKE clusters, and submits a provisioning request. Once it succeeds, it outputs the cluster name, zone, and context. Then get credentials:
@@ -104,9 +104,9 @@ Find all `commit` fields in the config (e.g., `verl.commit`, `slime.commit`, `rl
    **Repo mapping** (sibling directories of k8s-manifests):
    | Config field | Local repo path |
    |---|---|
-   | `slime.commit` | `/Users/tomerbenaltabe/repos/corma-slime` |
-   | `rl_env.commit` | `/Users/tomerbenaltabe/repos/rl_env` |
-   | `verl.commit` | `/Users/tomerbenaltabe/repos/corma-verl` |
+   | `slime.commit` | `~/repos/corma-slime` |
+   | `rl_env.commit` | `~/repos/rl_env` |
+   | `verl.commit` | `~/repos/corma-verl` |
 
    For each commit, run:
    ```bash
@@ -141,7 +141,7 @@ If runs with the same group name exist:
 Once all stages pass (or are skipped), render and apply:
 
 ```bash
-cd /Users/tomerbenaltabe/repos/k8s-manifests && uv run scripts/render_config.py <CONFIG_PATH> --apply --context <KUBECTL_CONTEXT>
+cd ~/repos/k8s-manifests && uv run scripts/render_config.py <CONFIG_PATH> --apply --context <KUBECTL_CONTEXT>
 ```
 
 ## Post-apply summary
