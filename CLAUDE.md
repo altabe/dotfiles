@@ -28,6 +28,7 @@ Each directory is a stow package — its contents get symlinked relative to `~`:
 - **git/** — `.gitconfig` plus delta's Catppuccin theme at `.config/delta/`. delta is the default pager; difftastic is opt-in via `git dft`.
 - **lazygit/** — lazygit config at `.config/lazygit/`. lazygit's default path on macOS is `~/Library/Application Support/lazygit`, so `.zshrc` exports `LG_CONFIG_FILE` to point here.
 - **launchd/** — LaunchAgents at `Library/LaunchAgents/`. `com.personal.claude-keepalive` runs `tmux/.config/tmux/claude-keepalive.sh` at login and every 10 min to resume kept Claude sessions in tmux. Load with `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/<plist>`.
+- **hammerspoon/** — Hammerspoon config (`.hammerspoon/init.lua`). Alt-Tab switches windows on the current space (no previews); tapping Shift while Alt is held steps back. Keys must be bound with `hs.hotkey`, not an `hs.eventtap` keyDown tap: when Secure Input is on (loginwindow often leaves it stuck after unlocking), event taps only see modifier changes. `secureinput` shows which process holds it.
 - **claude/** — Claude Code skills at `.claude/skills/` (also used by Cursor via `~/.cursor/skills` symlink). Also tracks `.claude/settings.local.json` (not auto-stowed — use `stow claude -t ~ --adopt` to link it).
 
 ## Neovim Config Architecture

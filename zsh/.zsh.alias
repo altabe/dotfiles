@@ -112,3 +112,11 @@ kgpus() {
   rm -rf "$tmp"
 }
 
+
+# Which process holds Secure Input (it hides keystrokes from Hammerspoon & co.).
+# If it's loginwindow, it's stuck: lock and unlock the screen (ctrl-cmd-q) to release it.
+secureinput() {
+  local pid=$(ioreg -l -w 0 | grep -o '"kCGSSessionSecureInputPID"=[0-9]*' | head -1 | cut -d= -f2)
+  if [[ -z "$pid" ]]; then echo "Secure Input is off"; return; fi
+  echo "Secure Input is on, held by: $(ps -p $pid -o comm= 2>/dev/null || echo "pid $pid")"
+}
