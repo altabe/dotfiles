@@ -75,7 +75,12 @@ cd() {
 }
 
 # Ghost-text suggestions from history as you type; accept with → (or Alt-f per word)
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# Homebrew on macOS, apt on Linux.
+for f in /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+         /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+  [[ -f $f ]] && { source $f; break; }
+done
+unset f
 
 # Kubectl aliases
 [[ -f ~/.kubectl_aliases ]] && source ~/.kubectl_aliases
@@ -104,6 +109,9 @@ sws() {
 # lazygit reads ~/Library/Application Support/lazygit on macOS, which stow can't
 # target. Point it at the stowed config instead.
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
+
+# The forwarded SSH agent, through the link ~/.ssh/rc re-points on every login.
+export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
 # Machine-local, untracked config.
 [[ -f ~/.zsh.local ]] && source ~/.zsh.local
