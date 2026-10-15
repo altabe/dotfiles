@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.personal.claude-keepalive</string>
+  <key>ProgramArguments</key><array><string>/Users/tomer/.config/tmux/claude-keepalive.sh</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>600</integer>
+  <!-- The tmux server this job may start must outlive the job. -->
+  <key>AbandonProcessGroup</key><true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/Users/tomer/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>LANG</key><string>en_US.UTF-8</string>
+    <key>LC_ALL</key><string>en_US.UTF-8</string>
+  </dict>
+  <key>StandardOutPath</key><string>/Users/tomer/Library/Logs/claude-keepalive.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/tomer/Library/Logs/claude-keepalive.out.log</string>
+</dict>
+</plist>

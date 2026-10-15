@@ -73,6 +73,11 @@ keeps the session ID:
 Don't use `claude --bg`: background sessions are shut down after 8 hours idle,
 and `--bg --resume` of a finished session created a copy with a new ID.
 
+In-progress and blocked delegates are kept alive by
+`~/.config/tmux/claude-keepalive.sh` (launchd, every 10 minutes), which
+resumes any whose window or Claude process is gone. So mark a delegate `done`
+*before* closing it, or it will be reopened.
+
 When a delegate is done and the user asks to close it, type `/exit` into its
 window rather than killing the window (`tmux send-keys -t delegates:<name> -l /exit`, then Enter).
 

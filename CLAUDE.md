@@ -27,6 +27,7 @@ Each directory is a stow package — its contents get symlinked relative to `~`:
 - **omp/** — Oh My Posh prompt theme at `.config/omp/`. TOML config with Catppuccin palette.
 - **git/** — `.gitconfig` plus delta's Catppuccin theme at `.config/delta/`. delta is the default pager; difftastic is opt-in via `git dft`.
 - **lazygit/** — lazygit config at `.config/lazygit/`. lazygit's default path on macOS is `~/Library/Application Support/lazygit`, so `.zshrc` exports `LG_CONFIG_FILE` to point here.
+- **launchd/** — LaunchAgents at `Library/LaunchAgents/`. `com.personal.claude-keepalive` runs `tmux/.config/tmux/claude-keepalive.sh` at login and every 10 min to resume kept Claude sessions in tmux. Load with `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/<plist>`.
 - **claude/** — Claude Code skills at `.claude/skills/` (also used by Cursor via `~/.cursor/skills` symlink). Also tracks `.claude/settings.local.json` (not auto-stowed — use `stow claude -t ~ --adopt` to link it).
 
 ## Neovim Config Architecture
