@@ -35,13 +35,15 @@ Log file: `~/personal/delegates.csv`, with columns
    that already has a window.
 
 2. **Draft the initial prompt.**
-   - If the description is clear and self-contained, pass it **verbatim**.
-   - If it depends on this conversation (for example "book that barber",
+   - Start from the user's description and keep their intent. Keeping their
+     exact wording is not a goal: rephrase freely when it's incomplete,
+     ambiguous or terse, and fix typos.
+   - Write it so a fresh session with no memory of this chat can act on it.
+     When it depends on this conversation (for example "book that barber",
      "follow up on the arnona thing", or files and findings discussed earlier),
-     rewrite it so a fresh session with no memory of this chat can act on it.
-     Include the concrete facts it needs: names, dates, file paths, URLs,
-     decisions already made, and constraints the user set. Don't add anything
-     the user didn't ask for.
+     fill in the concrete facts it needs: names, dates, file paths, URLs,
+     decisions already made, and constraints the user set. Don't expand the
+     scope beyond what the user asked for.
    - Always end the prompt with a new line containing exactly:
      `notify me when the task is done`
 
@@ -59,8 +61,7 @@ Log file: `~/personal/delegates.csv`, with columns
    UUID and the open command.
 
 4. **Report** in a few lines: the session name, the tmux window, the open
-   command, and whether the prompt went verbatim or was adapted. If it was
-   adapted, show the prompt.
+   command, and the prompt as sent, unless it's the user's wording unchanged.
 
 The open command works both inside and outside tmux:
 `tmux switch-client -t delegates:<name> 2>/dev/null || tmux attach -t delegates:<name>`.
