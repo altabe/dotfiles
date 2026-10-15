@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch a background Claude session and keep a CSV log of delegated tasks.
+"""Launch a Claude session in a tmux window and keep a CSV log of delegated tasks.
 
   delegate.py start --name NAME --prompt-file FILE [--cwd DIR]
   delegate.py update --name NAME --status STATUS [--notes TEXT]
@@ -9,11 +9,13 @@ import argparse
 import csv
 import datetime
 import os
-import re
+import shlex
 import subprocess
 import sys
+import uuid
 
 LOG = os.path.expanduser("~/personal/delegates.csv")
+TMUX_SESSION = "delegates"
 FIELDS = ["datetime", "session", "id", "status", "prompt", "notes"]
 STATUSES = ("in-progress", "blocked", "done")
 
@@ -32,20 +34,29 @@ def write_rows(rows):
         w.writerows(rows)
 
 
+def tmux(*argv):
+    return subprocess.run(["tmux", *argv], capture_output=True, text=True)
+
+
+def open_command(name):
+    target = f"{TMUX_SESSION}:{name}"
+    return f"tmux switch-client -t {target} 2>/dev/null || tmux attach -t {target}"
+
+
 def start(args):
     with open(args.prompt_file) as f:
         prompt = f.read().strip()
-    out = subprocess.run(
-        ["claude", "--bg", "-n", args.name, prompt],
-        cwd=os.path.expanduser(args.cwd),
-        capture_output=True,
-        text=True,
-    )
-    text = out.stdout + out.stderr
-    m = re.search(r"backgrounded\s*·\s*([0-9a-f]+)", text)
-    if out.returncode != 0 or not m:
-        sys.exit(f"claude --bg failed (exit {out.returncode}):\n{text}")
-    sid = m.group(1)
+    if tmux("list-windows", "-t", TMUX_SESSION, "-F", "#{window_name}").stdout.split().count(args.name):
+        sys.exit(f"a window named {args.name!r} already exists in tmux session {TMUX_SESSION!r}")
+    sid = str(uuid.uuid4())
+    cmd = " ".join(shlex.quote(a) for a in ["claude", "-n", args.name, "--session-id", sid, prompt])
+    cwd = os.path.expanduser(args.cwd)
+    if tmux("has-session", "-t", TMUX_SESSION).returncode == 0:
+        out = tmux("new-window", "-d", "-t", f"{TMUX_SESSION}:", "-n", args.name, "-c", cwd, cmd)
+    else:
+        out = tmux("new-session", "-d", "-s", TMUX_SESSION, "-n", args.name, "-c", cwd, cmd)
+    if out.returncode != 0:
+        sys.exit(f"tmux failed: {out.stderr}")
     rows = read_rows()
     rows.append({
         "datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -56,12 +67,12 @@ def start(args):
         "notes": "",
     })
     write_rows(rows)
-    print(f"id: {sid}\nattach: claude attach {sid}")
+    print(f"id: {sid}\nwindow: {TMUX_SESSION}:{args.name}\nopen: {open_command(args.name)}")
 
 
 def update(args):
     rows = read_rows()
-    matches = [r for r in rows if args.name in (r["session"], r["id"])]
+    matches = [r for r in rows if args.name == r["session"] or r["id"].startswith(args.name)]
     if not matches:
         sys.exit(f"no delegate named {args.name!r}")
     row = matches[-1]
