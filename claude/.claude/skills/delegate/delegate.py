@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Launch a Claude session in a tmux window and keep a CSV log of delegated tasks.
 
-  delegate.py start --name NAME --prompt-file FILE [--cwd DIR]
+  delegate.py start --name NAME --prompt-file FILE [--cwd DIR] [--no-log]
   delegate.py update --name NAME --status STATUS [--notes TEXT]
   delegate.py list
 """
@@ -57,17 +57,22 @@ def start(args):
         out = tmux("new-session", "-d", "-s", TMUX_SESSION, "-n", args.name, "-c", cwd, cmd)
     if out.returncode != 0:
         sys.exit(f"tmux failed: {out.stderr}")
+    if not args.no_log:
+        log_start(args.name, sid, prompt)
+    print(f"id: {sid}\nwindow: {TMUX_SESSION}:{args.name}\nopen: {open_command(args.name)}")
+
+
+def log_start(name, sid, prompt):
     rows = read_rows()
     rows.append({
         "datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "session": args.name,
+        "session": name,
         "id": sid,
         "status": "in-progress",
         "prompt": prompt,
         "notes": "",
     })
     write_rows(rows)
-    print(f"id: {sid}\nwindow: {TMUX_SESSION}:{args.name}\nopen: {open_command(args.name)}")
 
 
 def update(args):
@@ -96,6 +101,7 @@ def main():
     s.add_argument("--name", required=True)
     s.add_argument("--prompt-file", required=True)
     s.add_argument("--cwd", default="~/personal")
+    s.add_argument("--no-log", action="store_true", help="don't add a row to the log")
     s.set_defaults(fn=start)
     u = sub.add_parser("update")
     u.add_argument("--name", required=True, help="session name or id")
