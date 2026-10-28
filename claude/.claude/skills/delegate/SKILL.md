@@ -44,6 +44,36 @@ Log file: `~/personal/delegates.csv`, with columns
      fill in the concrete facts it needs: names, dates, file paths, URLs,
      decisions already made, and constraints the user set. Don't expand the
      scope beyond what the user asked for.
+   - Tell the delegate to keep its state in local files, so a context reset
+     (`/clear`, compaction) or a handoff to a fresh session is trivial. Include
+     these instructions in the prompt, adapted to the task:
+     - The state lives in `~/personal/delegates/<name>/` (create it). The
+       entry point is `STATE.md`, with these sections: goal and scope,
+       constraints and rules the user set, decisions made (with the reason),
+       current status, open questions, and next steps. Put other working data
+       (lists, drafts, findings, links, screenshots) in files beside it, and
+       reference them from `STATE.md`.
+       - If the task already has a natural home for its data (for example a
+         repo, or a folder like `~/personal/shopping-lists/`), keep the data
+         there and have `STATE.md` point to it.
+     - Update `STATE.md` after every meaningful step, user decision or new
+       fact, before replying. Don't leave it until the end. The files, not
+       the conversation, are the source of truth.
+     - Write it for a reader with no memory of the conversation. Keep it
+       current: rewrite stale parts instead of appending a log.
+     - At the start, and after any context reset, read `STATE.md` first and
+       continue from it.
+     - Never store passwords, ID numbers or one-time codes in it.
+   - If the task may use Chrome, tell the delegate to:
+     - Open its own tabs.
+     - Record each tab it opens in `STATE.md` (tab ID, URL and purpose), and
+       note there any tab the user asked to keep.
+     - Leave its tabs open while the task is in progress, because the user may
+       be looking at them.
+     - Once the task is done (the user confirms, or it's marked `done`),
+       close the tabs it opened, except the ones the user asked to keep. Then
+       clear the list in `STATE.md`.
+     - Never close tabs it didn't open.
    - Always end the prompt with a new line containing exactly:
      `notify me when the task is done`
 
@@ -67,6 +97,10 @@ The open command works both inside and outside tmux:
 `tmux switch-client -t delegates:<name> 2>/dev/null || tmux attach -t delegates:<name>`.
 If the user follows this skill with `/pb`, copy that command.
 
+To reset a delegate's context or hand its task to a new session, start the
+new session with a prompt telling it to read
+`~/personal/delegates/<name>/STATE.md` and continue from there.
+
 If a delegate's window is gone (the session exited or the machine rebooted),
 reopen it in the same window with the logged UUID. An interactive `--resume`
 keeps the session ID:
@@ -81,6 +115,15 @@ resumes any whose window or Claude process is gone. So mark a delegate `done`
 
 When a delegate is done and the user asks to close it, type `/exit` into its
 window rather than killing the window (`tmux send-keys -t delegates:<name> -l /exit`, then Enter).
+
+Clean up its Chrome tabs when a delegate is marked `done`:
+1. If its session is still running, ask it to close its tabs first.
+2. Otherwise, or if any are left, the delegator closes them. Use the tabs
+   listed in its `~/personal/delegates/<name>/STATE.md`, and keep any the
+   user asked to keep.
+3. Only close tabs that are listed there, or that are clearly that delegate's
+   (in the shared tab group, with a URL tied to its task). If unsure, list
+   them for the user instead of closing them.
 
 ## Updating status
 
