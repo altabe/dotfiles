@@ -31,6 +31,9 @@ Helper script: `~/.claude/skills/spawn/spawn.py`
 2. **Draft the initial prompt.**
    - Start from the user's description and keep their intent. Rephrase freely
      when it's incomplete, ambiguous or terse, and fix typos.
+   - Keep the user's constraints exactly as stated (location, scope, filters,
+     sort order). Rephrasing is fine, widening them is not: don't turn "in Tel
+     Aviv" into "Tel Aviv or nearby". If widening seems useful, ask first.
    - Write it for a fresh session with no memory of this chat. Fill in the
      concrete facts it needs from this conversation: names, dates, file paths,
      URLs, decisions already made, and constraints and rules the user set.

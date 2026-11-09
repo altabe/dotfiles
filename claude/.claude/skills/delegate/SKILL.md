@@ -38,6 +38,9 @@ Log file: `~/personal/delegates.csv`, with columns
    - Start from the user's description and keep their intent. Keeping their
      exact wording is not a goal: rephrase freely when it's incomplete,
      ambiguous or terse, and fix typos.
+   - Keep the user's constraints exactly as stated (location, scope, filters,
+     sort order). Rephrasing is fine, widening them is not: don't turn "in Tel
+     Aviv" into "Tel Aviv or nearby". If widening seems useful, ask first.
    - Write it so a fresh session with no memory of this chat can act on it.
      When it depends on this conversation (for example "book that barber",
      "follow up on the arnona thing", or files and findings discussed earlier),
