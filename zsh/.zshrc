@@ -42,9 +42,6 @@ bindkey -M menuselect '^[[Z' reverse-menu-complete                # Shift-Tab go
 # Before the tools below: on Linux, oh-my-posh and claude install to ~/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
 
-# Claude Code: auto-compact (and its low-context warning) at 150k tokens
-export CLAUDE_CODE_AUTO_COMPACT_WINDOW=150000
-
 # Oh my posh
 # eval "$(oh-my-posh init zsh --config ~/.config/omp/catpuccin.omp.json)"
 eval "$(oh-my-posh init zsh --config ~/.config/omp/config.toml)"
