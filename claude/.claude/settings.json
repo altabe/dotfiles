@@ -11,6 +11,5 @@
   "theme": "dark",
   "agentPushNotifEnabled": true,
   "voiceEnabled": true,
-  "remoteControlAtStartup": true,
-  "autoCompactWindow": 150000
+  "remoteControlAtStartup": true
 }
