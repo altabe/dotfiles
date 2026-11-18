@@ -1,6 +1,6 @@
 ---
 name: spawn
-description: Run a subtask in a separate, interactive Claude session in its own tmux window, outside the current context, where the user can watch it and talk to it directly. Use when the user wants a side task done without filling this conversation, but still wants to follow or steer it (which a subagent doesn't allow). The spawned session isn't tracked and doesn't report back.
+description: Run a subtask in a separate, interactive Claude session in its own tmux window, outside the current context, where the user can watch it and talk to it directly. Use when the user wants a side task done without filling this conversation, but still wants to follow or steer it (which a subagent doesn't allow). A side task the user doesn't need to watch goes to a subagent instead. The spawned session isn't tracked and doesn't report back.
 argument-hint: "<task description>"
 allowed-tools: Bash, Write
 ---

@@ -1,145 +1,124 @@
 ---
 name: delegate
-description: Hand a task off to a new Claude session in its own window of the "delegates" tmux session and log it in ~/personal/delegates.csv. Use when the user wants a task, usually a multi-step one, moved out of the current conversation. Also used to update or list delegated tasks.
-argument-hint: "<task description> | status <name> <in-progress|blocked|done> [note] | list"
+description: Hand a complex task to its own long-lived Claude session, one the user will discuss and steer over several turns, in a tmux window grouped under the delegating session, logged in ~/personal/delegates.csv. Use only for such tasks or when the user explicitly asks for a delegate or a separate session. A self-contained task that just needs a separate context and finishes in one go goes to a subagent (Agent tool), not here. Also used to list, message, close, reopen or update delegates.
+argument-hint: "<task> | list | tree | status <name> <status> [note] | close <name> [--park] | reopen <name> | send <name|--all> <msg>"
 allowed-tools: Bash, Write
 ---
 
-# delegate - hand a task to its own session
+# delegate - hand a complex task to its own session
 
-The user runs many unrelated tasks through one assistant session. This skill
-moves a task into its own named Claude session, running in a window of the
-dedicated `delegates` tmux session, and keeps a log of every delegated task.
-These are normal interactive sessions, so they don't time out when idle.
-They connect to remote control at startup, and the tmux watchdog
-(`~/.config/tmux/rc-watchdog.sh`) reconnects them if it drops.
+A delegate is a normal interactive Claude session for one task, in its own tmux
+window, connected to Remote Control so the user can talk to it from the phone.
+It is logged in `~/personal/delegates.csv` and kept alive until it's closed.
 
-Helper script: `~/.claude/skills/delegate/delegate.py`
-Log file: `~/personal/delegates.csv`, with columns
-`datetime, session, id, status, prompt, notes`.
+Helper: `python3 ~/.claude/skills/delegate/delegate.py` (below: `delegate.py`).
 
-## Arguments
+## Delegate or subagent?
 
-`$ARGUMENTS` is one of:
-- **A task description**: delegate it (the default).
-- **`status <name|id> <in-progress|blocked|done> [note]`**: update a logged task.
-  For `blocked`, put the reason in the note.
-- **`list`**: show the log.
+Ask: **will the user need to talk to it more than once?**
+- No (look something up, check a site, research a question, draft one thing):
+  run a background subagent and report its result here. This is the usual case.
+- Yes (a negotiation, a plan that needs his decisions, an ongoing assistant
+  role like shopping lists): delegate.
+
+`/delegate` typed by the user always delegates. A casual "delegate it" for a
+clearly one-shot task runs as a subagent, with one line saying so: "Ran it as a
+subagent; say /delegate if you want a session."
+
+## Layout
+
+Each delegate runs in tmux session `d-<parent>`, where `<parent>` is the name
+of the session that delegated it (`d-pa:rent-contract`). A delegate can
+delegate too, so its children go in `d-<its name>`: a tree. Empty `d-*`
+sessions vanish when their last window exits. `delegate.py tree` shows it.
+
+## Statuses
+
+| status | meaning | kept alive |
+|---|---|---|
+| `in-progress` | working, or an active back-and-forth | yes |
+| `waiting` | its turn ended on a question for the user (question in notes) | yes |
+| `blocked` | waiting on someone else (reason in notes) | yes |
+| `done` | finished; closed by the weekly sweep 48 h after the user's last message | no |
+| `parked` | not finished, closed for now; reopen any time | no |
+
+Delegates set their own status (see the prompt rules below). The delegator
+also sets it when the user reports one.
+
+`~/.config/tmux/claude-keepalive.sh` (launchd, every 10 min) resumes kept
+delegates whose Claude process is gone, delivers queued messages, finishes
+closes, and runs the weekly sweep. The sweep closes `done` delegates and never
+closes unfinished ones; for those idle 30+ days it sends the delegating session
+a `[delegate] Weekly delegate sweep` message. On receiving it, ask the user,
+per delegate, whether to keep, park, or mark it done.
 
 ## Delegating a task
 
-1. **Name the session.** Use lowercase words joined by dashes, ideally at most
-   2 words (`running-trainer`, `arnona-appeal`). Use 3 only when 2 would be
-   ambiguous. The name is also the tmux window name. Check `delegate.py list`
-   so it isn't already taken by an active delegate; the script refuses a name
-   that already has a window.
+1. **Name it**: lowercase words joined by dashes, ideally 2 (`arnona-appeal`).
+   `start` refuses a name an open delegate already has.
 
-2. **Draft the initial prompt.**
-   - Start from the user's description and keep their intent. Keeping their
-     exact wording is not a goal: rephrase freely when it's incomplete,
-     ambiguous or terse, and fix typos.
-   - Keep the user's constraints exactly as stated (location, scope, filters,
-     sort order). Rephrasing is fine, widening them is not: don't turn "in Tel
-     Aviv" into "Tel Aviv or nearby". If widening seems useful, ask first.
-   - Write it so a fresh session with no memory of this chat can act on it.
-     When it depends on this conversation (for example "book that barber",
-     "follow up on the arnona thing", or files and findings discussed earlier),
-     fill in the concrete facts it needs: names, dates, file paths, URLs,
-     decisions already made, and constraints the user set. Don't expand the
-     scope beyond what the user asked for.
-   - Tell the delegate to keep its state in local files, so a context reset
-     (`/clear`, compaction) or a handoff to a fresh session is trivial. Include
-     these instructions in the prompt, adapted to the task:
-     - The state lives in `~/personal/delegates/<name>/` (create it). The
-       entry point is `STATE.md`, with these sections: goal and scope,
-       constraints and rules the user set, decisions made (with the reason),
-       current status, open questions, and next steps. Put other working data
-       (lists, drafts, findings, links, screenshots) in files beside it, and
-       reference them from `STATE.md`.
-       - If the task already has a natural home for its data (for example a
-         repo, or a folder like `~/personal/shopping-lists/`), keep the data
-         there and have `STATE.md` point to it.
+2. **Draft the prompt.**
+   - Keep the user's intent; rephrase freely when terse or ambiguous, fix typos.
+   - Keep the user's constraints exactly (location, scope, filters, order).
+     Don't widen "in Tel Aviv" to "Tel Aviv or nearby"; ask first.
+   - Write it for a fresh session with no memory of this chat: fill in names,
+     dates, paths, URLs, decisions made and constraints set. Don't expand scope.
+   - Include these rules, adapted to the task:
+     - State lives in `~/personal/delegates/<name>/STATE.md` (create it), with
+       sections: goal and scope, constraints and rules the user set, decisions
+       made (with reason), current status, open questions, next steps. Other
+       working data goes beside it, or in the task's natural home (a repo,
+       `~/personal/shopping-lists/`), referenced from `STATE.md`.
      - Update `STATE.md` after every meaningful step, user decision or new
-       fact, before replying. Don't leave it until the end. The files, not
-       the conversation, are the source of truth.
-     - Write it for a reader with no memory of the conversation. Keep it
-       current: rewrite stale parts instead of appending a log.
-     - At the start, and after any context reset, read `STATE.md` first and
-       continue from it.
+       fact, before replying. Write it for a reader with no memory of the
+       conversation; rewrite stale parts instead of appending.
+     - At the start and after any context reset, read `STATE.md` first.
      - Never store passwords, ID numbers or one-time codes in it.
-   - If the task may use Chrome, tell the delegate to:
-     - Open its own tabs.
-     - Record each tab it opens in `STATE.md` (tab ID, URL and purpose), and
-       note there any tab the user asked to keep.
-     - Leave its tabs open while the task is in progress, because the user may
-       be looking at them.
-     - Once the task is done (the user confirms, or it's marked `done`),
-       close the tabs it opened, except the ones the user asked to keep. Then
-       clear the list in `STATE.md`.
-     - Never close tabs it didn't open.
-   - Always end the prompt with a new line containing exactly:
-     `notify me when the task is done`
+     - Keep your status in the log current with
+       `python3 ~/.claude/skills/delegate/delegate.py update --status <status> --notes "<short note>"`
+       (no `--name` needed: it finds this session): `waiting` with the question
+       when your reply ends on a question for Tomer; `in-progress` when he
+       answers; `blocked` with the reason when waiting on someone else; `done`
+       only when the whole task is finished. A request handled inside an
+       ongoing role (shopping lists, coaching) isn't done: stay `in-progress`.
+     - Messages starting with `[delegate]` are automated; follow them.
+   - If the task may use Chrome: open your own tabs; record each in
+     `STATE.md` (tab ID, URL, purpose) and note any the user asked to keep;
+     leave them open while the task is in progress; close them when told
+     you're being closed or once done, except the kept ones; never close tabs
+     you didn't open.
+   - End with a line containing exactly: `notify me when the task is done`
 
-3. **Launch and log.** Write the prompt to a file in the scratchpad, then run:
+3. **Launch**: write the prompt to a scratchpad file, then
+   `delegate.py start --name <name> --prompt-file <file> [--cwd <dir>]`.
+   `--cwd` defaults to `~/personal`; use a repo when the task belongs to one.
+   The directory must be one Claude already trusts, or the session sits on a
+   trust dialog. The parent is this session, taken from the environment.
 
-   ```
-   python3 ~/.claude/skills/delegate/delegate.py start --name <name> --prompt-file <file> [--cwd <dir>]
-   ```
+4. **Report** briefly: name, window, open command, and the prompt unless it's
+   the user's wording unchanged. If `/pb` follows, copy the open command.
 
-   `--cwd` defaults to `~/personal`. Pass a more specific directory only when
-   the task clearly belongs to one, for example a repo. The script generates a
-   session UUID and runs `claude -n <name> --session-id <uuid> "<prompt>"` in a
-   new window `delegates:<name>`, creating the `delegates` tmux session if it
-   doesn't exist. It appends an `in-progress` row to the log and prints the
-   UUID and the open command.
+## Other commands
 
-4. **Report** in a few lines: the session name, the tmux window, the open
-   command, and the prompt as sent, unless it's the user's wording unchanged.
-
-The open command works both inside and outside tmux:
-`tmux switch-client -t delegates:<name> 2>/dev/null || tmux attach -t delegates:<name>`.
-If the user follows this skill with `/pb`, copy that command.
-
-To reset a delegate's context or hand its task to a new session, start the
-new session with a prompt telling it to read
-`~/personal/delegates/<name>/STATE.md` and continue from there.
-
-If a delegate's window is gone (the session exited or the machine rebooted),
-reopen it in the same window with the logged UUID. An interactive `--resume`
-keeps the session ID:
-`tmux new-window -d -t delegates: -n <name> -c <cwd> "claude --resume <uuid> -n <name>"`.
-Don't use `claude --bg`: background sessions are shut down after 8 hours idle,
-and `--bg --resume` of a finished session created a copy with a new ID.
-
-In-progress and blocked delegates are kept alive by
-`~/.config/tmux/claude-keepalive.sh` (launchd, every 10 minutes), which
-resumes any whose window or Claude process is gone. So mark a delegate `done`
-*before* closing it, or it will be reopened.
-
-When a delegate is done and the user asks to close it, type `/exit` into its
-window rather than killing the window (`tmux send-keys -t delegates:<name> -l /exit`, then Enter).
-
-Clean up its Chrome tabs when a delegate is marked `done`:
-1. If its session is still running, ask it to close its tabs first.
-2. Otherwise, or if any are left, the delegator closes them. Use the tabs
-   listed in its `~/personal/delegates/<name>/STATE.md`, and keep any the
-   user asked to keep.
-3. Only close tabs that are listed there, or that are clearly that delegate's
-   (in the shared tab group, with a URL tied to its task). If unsure, list
-   them for the user instead of closing them.
-
-## Updating status
-
-When the user reports a delegate's status, or a delegated session reports
-back that it's done or blocked, run:
-
-```
-python3 ~/.claude/skills/delegate/delegate.py update --name <name|id> --status <status> [--notes "<reason>"]
-```
-
-Statuses are `in-progress`, `blocked` and `done`. Don't change the status
-without that signal.
-
-## Listing
-
-`python3 ~/.claude/skills/delegate/delegate.py list` prints one line per delegate.
+- `list [--all]`, `tree [--all]`: open delegates with status, idle time (since
+  the user's last message), context size and notes. `--all` adds closed ones.
+- `update --name <name> --status <status> [--notes ...]`: on the user's word,
+  or when a delegate reports in.
+- `open <name>`: prints the command that opens its window.
+- `close <name> [--park] [--notes ...]`: asks the delegate to close its tabs
+  and update `STATE.md`, then types `/exit` (on a later keepalive run if it's
+  busy). Default status `done`; `--park` for unfinished. Only when the user
+  asks, or for a delegate marked done. Never kill a window.
+- `reopen <name> [--fresh]`: back to `in-progress` in its old window group,
+  resuming the same session. `--fresh` starts a new session from `STATE.md`
+  instead; use it when the old context is large (150k+ tokens).
+- `send <name...> | --all | --children-of <name> --message "..."`: types a
+  `[delegate]` message only into idle sessions with an empty input box and no
+  open menu; others are queued and delivered later by keepalive. Use this for
+  every message or broadcast to delegates; never `tmux send-keys` directly.
+- **Handoff** to a fresh session for the same task: `start --name <new>
+  --replaces <old>` with a prompt to read the old `STATE.md`. The new one takes
+  the old one's place in the tree and the old one is closed as handed off.
+- `doctor`: log vs reality (kept but not running, done but still running,
+  renamed sessions, `d-*` windows with no row).
+- `sweep --dry-run`: what the weekly sweep would do now.
