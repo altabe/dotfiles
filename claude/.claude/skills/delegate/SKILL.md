@@ -1,7 +1,7 @@
 ---
 name: delegate
 description: Hand a complex task to its own long-lived Claude session, one the user will discuss and steer over several turns, in a tmux window grouped under the delegating session, logged in ~/personal/delegates.csv. Use only for such tasks or when the user explicitly asks for a delegate or a separate session. A self-contained task that just needs a separate context and finishes in one go goes to a subagent (Agent tool), not here. Also used to list, message, close, reopen or update delegates.
-argument-hint: "<task> | list | tree | status <name> <status> [note] | close <name> [--park] | reopen <name> | send <name|--all> <msg>"
+argument-hint: "<task> | new <task> | find <words> | list | tree | status <name> <status> [note] | close <name> [--park] | reopen <name> | send <name|--all> <msg>"
 allowed-tools: Bash, Write
 ---
 
@@ -53,6 +53,17 @@ a `[delegate] Weekly delegate sweep` message. On receiving it, ask the user,
 per delegate, whether to keep, park, or mark it done.
 
 ## Delegating a task
+
+0. **Look for an existing delegate first.** Run `delegate.py find <key words>`
+   with the task's main words (names, places, the thing itself). It ranks every
+   delegate, closed ones too, and lists the other open delegates; judge those
+   by meaning as well, since it only matches words. If one already covers the
+   task, continue it instead of starting a new one:
+   `delegate.py reopen <name> --message "<the request>"`. That hands a running
+   delegate the request, or resumes a closed one first (`--fresh` too if its
+   context is 150k+). Tell the user in one line ("Continued bike-fit instead
+   of starting a new session"). If it's unclear which one fits, ask. `/delegate
+   new` always starts a new one.
 
 1. **Name it**: lowercase words joined by dashes, ideally 2 (`arnona-appeal`).
    `start` refuses a name an open delegate already has.
@@ -109,9 +120,11 @@ per delegate, whether to keep, park, or mark it done.
   and update `STATE.md`, then types `/exit` (on a later keepalive run if it's
   busy). Default status `done`; `--park` for unfinished. Only when the user
   asks, or for a delegate marked done. Never kill a window.
-- `reopen <name> [--fresh]`: back to `in-progress` in its old window group,
-  resuming the same session. `--fresh` starts a new session from `STATE.md`
-  instead; use it when the old context is large (150k+ tokens).
+- `reopen <name> [--fresh] [--message ...]`: back to `in-progress` in its old
+  window group, resuming the same session, then hands it the message if given
+  (if it's running, it just gets the message). `--fresh` starts a new session
+  from `STATE.md` instead; use it when the old context is large (150k+ tokens).
+- `find <words>`: delegates of any status that mention these words.
 - `send <name...> | --all | --children-of <name> --message "..."`: types a
   `[delegate]` message only into idle sessions with an empty input box and no
   open menu; others are queued and delivered later by keepalive. Use this for

@@ -7,7 +7,8 @@ logged in ~/personal/delegates.csv.
   delegate.py list [--all]        open delegates, with idle time and context size
   delegate.py tree [--all]        same, as a tree under the delegating sessions
   delegate.py open NAME           print the command that opens its window
-  delegate.py reopen NAME [--fresh]
+  delegate.py find WORDS...       existing delegates (any status) about these words
+  delegate.py reopen NAME [--fresh] [--message TEXT]   (running: just hands it the message)
   delegate.py close NAME [--park] [--notes TEXT]
   delegate.py send (NAME... | --all | --children-of NAME) --message TEXT
   delegate.py sweep [--dry-run]   weekly: close done delegates, warn about long-idle ones
@@ -415,25 +416,89 @@ def open_(a):
 
 
 def reopen(a):
+    """Bring a delegate back (or reach it if it's running) and optionally hand it a request."""
+    msg = " ".join(a.message.split()) if a.message else None
     with locked():
         rows = read_rows()
         r = find(rows, a.name) or sys.exit(f"no delegate {a.name!r}")
         if r["id"] in live_sessions():
-            sys.exit(f"{r['session']} is already running: " + open_command(r))
-        if a.fresh:
+            if not msg:
+                sys.exit(f"{r['session']} is already running: " + open_command(r))
+            r["status"] = "in-progress"
+            write_rows(rows)
+            fresh_prompt = None
+        elif a.fresh:
             old = r["id"]
             r["id"] = str(uuid.uuid4())
             r["notes"] = f"fresh session; previous id {old}. " + r["notes"]
-            prompt = (f"Continue the task in ~/personal/delegates/{r['session']}/: read STATE.md "
-                      "there first and continue from it. Keep STATE.md current as before.\n"
-                      "notify me when the task is done")
-            args = ["--session-id", r["id"], prompt]
+            fresh_prompt = (f"Continue the task in ~/personal/delegates/{r['session']}/: read STATE.md "
+                            "there first and continue from it. Keep STATE.md current as before."
+                            + (f"\n\nNew request from Tomer: {msg}" if msg else "")
+                            + "\nnotify me when the task is done")
+            r["status"] = "in-progress"
+            launch(r["session"], r["id"], r["cwd"], group_of(r), ["--session-id", r["id"], fresh_prompt])
+            write_rows(rows)
         else:
-            args = ["--resume", r["id"]]
-        r["status"] = "in-progress"
-        launch(r["session"], r["id"], r["cwd"], group_of(r), args)
-        write_rows(rows)
+            fresh_prompt = None
+            r["status"] = "in-progress"
+            launch(r["session"], r["id"], r["cwd"], group_of(r), ["--resume", r["id"]])
+            write_rows(rows)
     print(f"{r['session']}: in-progress\nopen: {open_command(r)}")
+    if msg and not fresh_prompt:
+        # A resumed session takes a few seconds to show its prompt; wait for it, else queue.
+        text = f"New request from Tomer: {msg}"
+        for _ in range(30):
+            info = live_sessions().get(r["id"])
+            if info and session_ready(info):
+                break
+            time.sleep(3)
+        print("request: " + deliver(r["id"], text))
+
+
+STOP = set("a an and the of for to in on with my me i is it this that be by at from or as".split())
+
+
+def stem(w):
+    return w[:max(4, len(w) - 2)] if len(w) > 4 else w
+
+
+def search(a):
+    """Rank delegates (latest row per name, any status) by how many query words they mention."""
+    words = [w for w in re.findall(r"[\w-]+", " ".join(a.words).lower()) if w not in STOP]
+    latest = {}
+    for r in read_rows():
+        latest[r["session"]] = r
+    live = live_sessions()
+    hits = []
+    me = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    for r in latest.values():
+        if r["id"] == me:
+            continue
+        goal = ""
+        st = f"{STATE_ROOT}/{r['session']}/STATE.md"
+        if os.path.exists(st):
+            text = open(st, errors="ignore").read()
+            m = re.search(r"^##[^\n]*goal[^\n]*\n(.*?)(?=^## )", text, re.S | re.I | re.M)
+            goal = m.group(1) if m else text[:1500]
+        hay = " ".join([r["prompt"], r["notes"], goal]).lower()
+        name = r["session"].replace("-", " ")
+        pats = [re.compile(r"\b" + re.escape(stem(w))) for w in words]
+        score = sum(bool(p.search(hay) or p.search(name)) for p in pats)
+        named = sum(bool(p.search(name)) for p in pats)          # name matches rank first
+        if score * 2 >= len(words):                               # at least half the words
+            hits.append((score, named, r))
+    hits.sort(key=lambda h: (-(h[0] + h[1]), -h[0]))
+    hits = [(sc, r) for sc, _, r in hits]
+    print(f"matches for {' '.join(words)!r}:" if hits else "no matches")
+    for score, r in hits[:8]:
+        state = "running" if r["id"] in live else "not running"
+        print(f"  {score}/{len(words)}  {r['session']}  [{r['status']}, {state}]  {r['notes'][:100]}")
+    shown = {r["session"] for _, r in hits[:8]}
+    rest = [r for r in latest.values() if r["status"] in KEPT and r["session"] not in shown]
+    if rest:
+        print("other open delegates (check by meaning, not just words):")
+        for r in rest:
+            print(f"  {r['session']}  [{r['status']}]  {r['notes'][:100]}")
 
 
 def close(a):
@@ -565,7 +630,11 @@ def main():
     s = sub.add_parser("reopen")
     s.add_argument("name")
     s.add_argument("--fresh", action="store_true", help="new session that continues from STATE.md")
+    s.add_argument("--message", help="request to hand it once it's up (works if it's running too)")
     s.set_defaults(fn=reopen)
+    s = sub.add_parser("find")
+    s.add_argument("words", nargs="+")
+    s.set_defaults(fn=search)
     s = sub.add_parser("close")
     s.add_argument("name")
     s.add_argument("--park", action="store_true", help="not finished: status parked instead of done")
