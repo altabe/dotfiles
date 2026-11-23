@@ -39,9 +39,8 @@ Don't blame the user's phone.
 
 ## Runtime pitfalls
 - **Don't use Repeat over large lists:** it can hang for minutes. Put list properties straight into one Text action (each becomes a newline-joined list), and process them on the receiving side.
-- **Sending a lot of data out triggers an "Allow sharing large amounts of data" prompt,** which blocks unattended runs. Keep payloads small (sort, limit). If a prompt still appears, ask the user once to turn on Settings → Apps → Shortcuts → Advanced → Allow Sharing Large Amounts of Data.
 - **On a locked iPhone, protected data may be unreadable,** so a time-based automation may get nothing. Never overwrite good data with an empty result.
-- **First runs show permission prompts** (per app, per domain). Warn the user to choose "Always Allow".
+- **The first run shows one-time permission prompts** (data access, sending to a domain, sharing large amounts of data). Tell the user to tap "Always Allow"; after that, unattended runs are fine.
 
 ## Secrets
 - Import questions (`WFWorkflowImportQuestions`) are easy to skip by accident. If the user has already given you a value, embed it in the file instead.
