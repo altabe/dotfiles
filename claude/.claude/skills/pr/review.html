@@ -464,6 +464,20 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     return "Routed to " + name + ": it gives your approval real weight, but may still push back on a problem it finds in the code" + rest;
   }
 
+  // ---------- drafts: a republish reloads every open view, so an open note box is kept ----------
+  const DRAFT_KEY = "pr-review:" + ((DATA.pr || {}).repo || "") + "#" + ((DATA.pr || {}).number || "") + ":drafts";
+  const SCROLL_KEY = DRAFT_KEY + ":scroll";
+  function readDrafts() {
+    try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") || {}; } catch { return {}; }
+  }
+  // draft: {action, text, start, end}, or null to drop it. `focus` marks the box being typed in.
+  function saveDraft(id, draft, focus) {
+    const map = readDrafts();
+    if (draft) map[id] = draft; else delete map[id];
+    if (focus) map._focus = id; else if (!draft && map._focus === id) delete map._focus;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(map)); } catch { /* storage unavailable */ }
+  }
+
   // ---------- decision row ----------
   function decisionArea(item, kind, card) {
     const box = document.createElement("div");
@@ -472,6 +486,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     if (decision && decision.status !== "failed") {
       renderOutcome(box, decision);
       setPending(item.id, null);
+      saveDraft(item.id, null);
       return box;
     }
     const pending = readPending()[item.id];
@@ -542,9 +557,16 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       box.append(hint);
     }
     box.append(composer);
+    const draft = readDrafts()[item.id];
+    if (draft && ACTIONS[draft.action]) {
+      for (const b of choices.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.action === draft.action));
+      openComposer(composer, item, kind, card, draft.action, draft);
+    }
   }
 
-  function openComposer(composer, item, kind, card, action) {
+  // `draft` is a note box restored after a reload: its text and caret come back, and it takes
+  // focus only if it was the one being typed in.
+  function openComposer(composer, item, kind, card, action, draft) {
     const noteId = "note-" + item.id;
     const required = action === "suggest";
     const placeholder = {
@@ -565,7 +587,11 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     const area = composer.querySelector("textarea");
     const status = composer.querySelector(".status");
     const sendBtn = composer.querySelector("[data-send]");
+    const keep = (focus) => saveDraft(item.id, { action, text: area.value, start: area.selectionStart, end: area.selectionEnd }, focus);
+    if (draft) area.value = String(draft.text || "").slice(0, NOTE_MAX);
+    for (const type of ["input", "focus", "keyup", "click"]) area.addEventListener(type, () => keep(true));
     composer.querySelector("[data-cancel]").addEventListener("click", () => {
+      saveDraft(item.id, null);
       composer.hidden = true;
       composer.innerHTML = "";
       for (const b of composer.parentElement.querySelectorAll(".choices button")) b.setAttribute("aria-pressed", "false");
@@ -584,6 +610,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       status.textContent = "Sending.";
       const result = await send(card, text);
       if (result.ok) {
+        saveDraft(item.id, null);
         setPending(item.id, action, route);
         const box = composer.closest(".decide");
         box.replaceWith(decisionArea(item, kind, card));
@@ -594,7 +621,17 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       status.textContent = result.message;
       offerCopy(composer, text);
     });
-    area.focus();
+    if (!draft) {
+      keep(true);
+      area.focus();
+    } else if (readDrafts()._focus === item.id) {
+      // The card may be collapsed (it is rendered before collapsible() runs), so focus after render.
+      setTimeout(() => {
+        setOpen(card, true);
+        area.focus({ preventScroll: true });
+        try { area.setSelectionRange(draft.start ?? area.value.length, draft.end ?? area.value.length); } catch { /* not focusable */ }
+      }, 0);
+    }
   }
 
   async function send(card, text) {
@@ -780,6 +817,14 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   }
 
   window.addEventListener("hashchange", openLinkedCard);
+  window.addEventListener("pagehide", () => {
+    try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch { /* storage unavailable */ }
+  });
   render();
+  // A reload for a republish lands where the viewer was, unless the link names a card.
+  try {
+    const y = Number(sessionStorage.getItem(SCROLL_KEY));
+    if (y > 0 && !location.hash) window.scrollTo(0, y);
+  } catch { /* storage unavailable */ }
 })();
 </script>
