@@ -1,7 +1,7 @@
 ---
 name: pr
-description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Suggest fix / Defer / Deny on every issue and comment; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page, and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
-argument-hint: "<PR link> [write mode]"
+description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Suggest fix / Defer / Deny on every issue and comment; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page (or given as `impl <session>`), and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
+argument-hint: "<PR link> [impl <session>] [write mode]"
 allowed-tools:
 ---
 
@@ -10,6 +10,10 @@ allowed-tools:
 Review the pull request at the link given in `$ARGUMENTS`. Use `gh` (or `glab`
 for GitLab) to fetch the PR metadata, diff, and the full content of changed
 files for context. If no link was given, ask for one.
+
+`impl <session>` in `$ARGUMENTS` names the implementing session (see
+**Routing to an implementing session**) from the start: the first render gets
+`--session "<session>"`, so the page's "Implementing session" box opens with it.
 
 The review is presented as an artifact page (see **The review page**), where
 the user decides on each issue and comment with buttons that send the
@@ -145,8 +149,9 @@ template beside this file. Write no review prose to the conversation.
    (`<scratchpad>/pr-<repo>-<number>/review.json`) with the shape below.
    Text fields take light Markdown: paragraphs, `-`/`1.` lists, inline code,
    ```` ``` ```` fences, `**bold**`, `>` quotes and https links. No tables or HTML.
-2. Render it: `python3 -I ~/.claude/skills/pr/build.py <dir>/review.json`. It
-   checks the shape and writes `<dir>/review.html`.
+2. Render it: `python3 -I ~/.claude/skills/pr/build.py <dir>/review.json`, plus
+   `--session "<session>"` when `impl <session>` was given. It checks the shape
+   and writes `<dir>/review.html`.
 3. Load the `artifact-capabilities` skill (the Artifact tool requires it
    before declaring capabilities; the template already follows it), then
    publish `review.html` with `capabilities: {"comments": {}}`, `icon:
@@ -197,7 +202,7 @@ template beside this file. Write no review prose to the conversation.
     }
   ],
   "comments_note": "Optional: comments that got no card, and why.",
-  "implementing_session": "Set by build.py --session; leave it out at first.",
+  "implementing_session": "Set by build.py --session (impl argument, then the last route); never write it yourself.",
   "lines": {
     "rows": [{"category": "tests", "files": 6, "lines": 412},
              {"category": "prompts", "files": 3, "lines": 90, "definition": "LLM prompt text"}],
