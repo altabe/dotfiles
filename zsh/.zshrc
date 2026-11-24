@@ -113,5 +113,11 @@ export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 # The forwarded SSH agent, through the link ~/.ssh/rc re-points on every login.
 export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
+# Show times in Israel time, even on devboxes whose system clock is UTC.
+export TZ=Asia/Jerusalem
+
 # Machine-local, untracked config.
 [[ -f ~/.zsh.local ]] && source ~/.zsh.local
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/ubuntu/google-cloud-sdk/path.zsh.inc' ]; then . '/home/ubuntu/google-cloud-sdk/path.zsh.inc'; fi
