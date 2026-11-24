@@ -110,8 +110,8 @@ sws() {
 # target. Point it at the stowed config instead.
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 
-# The forwarded SSH agent, through the link ~/.ssh/rc re-points on every login.
-export SSH_AUTH_SOCK=~/.ssh/agent.sock
+# On a devbox: the forwarded SSH agent, through the link ~/.ssh/rc re-points on every login.
+[[ -L ~/.ssh/agent.sock ]] && export SSH_AUTH_SOCK=~/.ssh/agent.sock
 
 # Show times in Israel time, even on devboxes whose system clock is UTC.
 export TZ=Asia/Jerusalem
