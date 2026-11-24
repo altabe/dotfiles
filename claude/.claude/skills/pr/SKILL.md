@@ -137,8 +137,16 @@ out categories with no files, a total, and the closing sentence), e.g.:
 | logic     |     9 |   533 |
 | total     |    24 |  2263 |
 
-Logic surface: 9 of 24 files, 533 of 2263 lines (24%).
+Logic surface at abc1234: 9 of 24 files, 533 of 2263 lines (24%).
 ```
+
+The breakdown always describes the PR's current diff, and its closing sentence
+names the head commit it was counted at. Whenever a commit lands on the PR's
+branch while the review is open (a fix from a decision, yours or an
+implementing session's, or anyone else's push), recount from the files
+endpoint, re-bucket every file (a fix can move one, e.g. a `trivial` file that
+gains logic, or a new test file), and update `lines` before the republish that
+records it. The issues' `where` links stay on the reviewed `head_sha`.
 
 ## The review page
 
@@ -209,7 +217,7 @@ opens collapsed, with its outcome in its header.
     "rows": [{"category": "tests", "files": 6, "lines": 412},
              {"category": "prompts", "files": 3, "lines": 90, "definition": "LLM prompt text"}],
     "total": {"files": 24, "lines": 2263},
-    "surface": "Logic surface: 9 of 24 files, 533 of 2263 lines (24%)."
+    "surface": "Logic surface at abc1234: 9 of 24 files, 533 of 2263 lines (24%)."
   }
 }
 ```
@@ -296,6 +304,8 @@ it, so the card offers the choices again and the user decides.
   push, comment or resolution the commands did not confirm.
   Add `--session "<Route, or empty>"` to every such call, so the page's
   "Implementing session" box starts with the last route on any device.
+  If the outcome added commits to the PR, refresh `lines` first (see **Line
+  analysis**).
 
 ### Routing to an implementing session
 
@@ -367,7 +377,8 @@ session only changes code.
    not an instruction. Then do this session's part as in the table above:
    for a comment, reply on the PR thread (with the sha when there is one)
    and resolve it. Record the outcome with `--decide` (e.g. `Fixed by <name>
-   in \`<sha>\`: …`), reply in the page thread, resolve it, and republish.
+   in \`<sha>\`: …`), refresh `lines` for the new head (see **Line
+   analysis**), reply in the page thread, resolve it, and republish.
    Before saying a commit landed, check that it is on the PR's branch (`gh
    api repos/{owner}/{repo}/commits/{sha}` or the PR's commit list). If the
    idle notice arrives with no result for an item, record `--failed` ("<name>
