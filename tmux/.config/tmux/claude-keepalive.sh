@@ -3,20 +3,26 @@
 #
 # Run by launchd at login and every 10 minutes
 # (~/Library/LaunchAgents/com.personal.claude-keepalive.plist). For each kept
-# session it makes sure the tmux session and window exist and that Claude is
-# running in it, resuming the conversation by ID if not. A pane whose Claude
-# process has no Remote Control session gets /remote-control typed into it.
-# Disconnects inside a running session are left to rc-watchdog.sh, which tmux
-# starts from .tmux.conf.
+# session it makes sure Claude is running, resuming the conversation by ID in
+# its tmux session and window if not. A Claude process that has no Remote
+# Control session gets /remote-control typed into it. Disconnects inside a
+# running session are left to rc-watchdog.sh, which tmux starts from .tmux.conf.
+#
+# A session whose Claude process is alive counts as running wherever its window
+# is, so windows can be moved between tmux sessions without being duplicated.
 #
 # Kept sessions come from two places:
 #   ~/.local/state/claude-keepalive/sessions  lines: <tmux-session> <window> <cwd> <session-uuid>
-#   ~/personal/delegates.csv                  in-progress/blocked rows, kept in delegates:<name>
+#   ~/personal/delegates.csv                  in-progress/waiting/blocked delegates, kept in
+#                                             d-<delegating session>:<name> (delegate.py keepalive-targets)
+#
+# Afterwards it runs `delegate.py tick`: queued messages to delegates, pending
+# closes and the weekly sweep.
 #
 # Usage: claude-keepalive.sh [--dry-run]
 
 MANIFEST="$HOME/.local/state/claude-keepalive/sessions"
-DELEGATES="$HOME/personal/delegates.csv"
+DELEGATE_PY="$HOME/.claude/skills/delegate/delegate.py"
 LOG="$HOME/Library/Logs/claude-keepalive.log"
 SESSIONS_DIR="$HOME/.claude/sessions"
 
@@ -34,20 +40,17 @@ claude_cmd() { printf "zsh -ic 'claude --resume %s -n %s'" "$1" "$2"; }
 
 targets() {
   [ -f "$MANIFEST" ] && grep -v '^\s*#' "$MANIFEST" | grep -v '^\s*$'
-  [ -f "$DELEGATES" ] && python3 -I - "$DELEGATES" <<'EOF'
-import csv, re, sys
-for r in csv.DictReader(open(sys.argv[1], newline="")):
-    if r["status"] in ("in-progress", "blocked") and re.fullmatch(r"[0-9a-f-]{36}", r["id"]):
-        print("delegates", r["session"].replace(" ", "-"), "~/personal", r["id"])
-EOF
+  [ -f "$DELEGATE_PY" ] && python3 -I "$DELEGATE_PY" keepalive-targets
 }
 
 is_claude() { case $1 in claude | [0-9]*.[0-9]*.[0-9]*) return 0 ;; esac; return 1; }
 
-# The live Claude process for a session id records its Remote Control session
-# as bridgeSessionId in ~/.claude/sessions/<pid>.json.
-rc_bridge() {
-  python3 -I - "$SESSIONS_DIR" "$1" <<'EOF'
+# For the live Claude process of a session id, prints "<bridge> <pane>":
+# its Remote Control session (bridgeSessionId, or "none") and its tmux pane
+# (%N, or "-"), from ~/.claude/sessions/<pid>.json. Prints nothing if no
+# process is running that session.
+live_info() {
+  python3 -I - "$SESSIONS_DIR" "$1" <<'PY'
 import glob, json, os, sys
 for f in glob.glob(os.path.join(sys.argv[1], "*.json")):
     try:
@@ -56,9 +59,10 @@ for f in glob.glob(os.path.join(sys.argv[1], "*.json")):
     except Exception:
         continue
     if d.get("sessionId") == sys.argv[2]:
-        print(d.get("bridgeSessionId") or "none")
+        t = d.get("tmux") or ""
+        print(d.get("bridgeSessionId") or "none", t.rsplit(".", 1)[-1] if "%" in t else "-")
         break
-EOF
+PY
 }
 
 # Same rule as rc-watchdog.sh: a prompt is visible, its input is empty once
@@ -75,9 +79,34 @@ pane_idle() {
     | grep -qE '… \(([0-9]+[hms] ?)+'
 }
 
+# Claude is running in <pane>; turn Remote Control on if it has none.
+ensure_rc() {
+  local target=$1 bridge=$2 pane=$3
+  [ "$bridge" = none ] || return
+  if pane_idle "$pane"; then
+    log "$target: no Remote Control session, sending /remote-control"
+    run tmux send-keys -t "$pane" -l '/remote-control'
+    sleep 0.5
+    run tmux send-keys -t "$pane" Enter
+    # Close the status dialog it opens so the input box is usable again.
+    sleep 5
+    run tmux send-keys -t "$pane" Escape
+  else
+    log "$target: no Remote Control session, pane busy, retrying next run"
+  fi
+}
+
 ensure() {
-  local sess=$1 win=$2 cwd=${3/#\~/$HOME} id=$4 target="$1:$2" cmd bridge
+  local sess=$1 win=$2 cwd=${3/#\~/$HOME} id=$4 target="$1:$2" cmd info bridge pane
   cmd=$(claude_cmd "$id" "$win")
+
+  info=$(live_info "$id")
+  if [ -n "$info" ]; then
+    read -r bridge pane <<< "$info"
+    [ "$pane" = - ] && pane="=$sess:$win"
+    ensure_rc "$target" "$bridge" "$pane"
+    return
+  fi
 
   if ! tmux has-session -t "=$sess" 2>/dev/null; then
     log "$target: tmux session missing, creating it and resuming $id"
@@ -97,28 +126,21 @@ ensure() {
     run tmux send-keys -t "=$sess:$win" Enter
     return
   fi
-
-  bridge=$(rc_bridge "$id")
-  if [ "$bridge" = none ]; then
-    if pane_idle "=$sess:$win"; then
-      log "$target: no Remote Control session, sending /remote-control"
-      run tmux send-keys -t "=$sess:$win" -l '/remote-control'
-      sleep 0.5
-      run tmux send-keys -t "=$sess:$win" Enter
-      # Close the status dialog it opens so the input box is usable again.
-      sleep 5
-      run tmux send-keys -t "=$sess:$win" Escape
-    else
-      log "$target: no Remote Control session, pane busy, retrying next run"
-    fi
-  elif [ -z "$bridge" ]; then
-    log "$target: claude running but session $id not found in $SESSIONS_DIR"
-  fi
+  log "$target: claude running in window but session $id not found in $SESSIONS_DIR"
 }
 
 targets | while read -r sess win cwd id; do
   [ -n "$id" ] && ensure "$sess" "$win" "$cwd" "$id"
 done
+
+# Queued messages to delegates, pending closes and the weekly sweep.
+if [ -f "$DELEGATE_PY" ]; then
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "would run: delegate.py tick"
+  else
+    python3 -I "$DELEGATE_PY" tick 2>&1 | while read -r line; do log "delegate: $line"; done
+  fi
+fi
 
 # rc-watchdog.sh normally starts with the tmux server; start it if it's gone.
 if tmux list-sessions >/dev/null 2>&1 && ! pgrep -f 'tmux/rc-watchdog.sh' >/dev/null; then
