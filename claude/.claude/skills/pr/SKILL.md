@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Suggest fix / Defer / Deny on every issue and comment; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page (or given as `impl <session>`), and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
+description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Ask / Suggest fix / Defer / Deny on every issue and comment; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page (or given as `impl <session>`), and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
 argument-hint: "<PR link> [impl <session>] [write mode]"
 allowed-tools:
 ---
@@ -230,16 +230,17 @@ comment ids are `C1`, `C2`, …. Never reuse or renumber an id once published.
 
 ## Acting on decisions
 
-Every issue and comment card has five buttons: **Accept** (the user
+Every issue and comment card has six buttons: **Accept** (the user
 reviewed the fix and backs it), **Assess** (the user only skimmed it and
-wants it judged), **Suggest fix** (the user writes the fix), **Defer**
-(valid, but not in this PR) and **Deny** (not changing it). All but Suggest
-fix take an optional note. A click sends a comment to Claude on that card,
+wants it judged), **Ask** (the user has a question before deciding),
+**Suggest fix** (the user writes the fix), **Defer** (valid, but not in this
+PR) and **Deny** (not changing it). Ask and Suggest fix need their text; the
+rest take an optional note. A click sends a comment to Claude on that card,
 which wakes this session as an `[Artifact comment sent to Claude]` turn
 whose text starts with:
 
 ```
-[pr-review] <ID> <accept|assess|suggest|defer|deny>
+[pr-review] <ID> <accept|assess|ask|suggest|defer|deny>
 Issue: <title>          (or  Comment: <author> on <where>)
 Route: <session name>    (optional: the page's "Implementing session" box)
 Note: <the user's text>  (optional)
@@ -259,6 +260,7 @@ For each decision, look the item up in `review.json` and act:
 |----------|---------------------------|---------------------------|------------------|
 | accept   | Apply the proposed fix on the PR branch | Post the issue and its proposed fix as an inline review comment at `where` | Carry out the recommendation (a code change as in the author column), post the drafted `reply`, resolve the thread |
 | assess   | Check the issue and the fix against the current code; if both hold, as accept; if not, a pushback | Same check, then as accept or a pushback | Check the recommendation the same way, then as accept or a pushback |
+| ask      | Answer the question from the code; nothing on the PR | Same | Same: no reply on the thread, and it stays unresolved |
 | suggest  | Apply the user's fix instead | Post the issue with the user's fix | Do what the note says, reply with what was done, resolve the thread |
 | defer    | Record it; nothing on the PR | Record it; nothing on the PR | Reply that it moves to a follow-up (with the note), resolve the thread |
 | deny     | Record it; nothing on the PR | Record it; nothing on the PR | Reply why it won't change (the note, else the assessment), resolve the thread |
@@ -271,6 +273,14 @@ issue and propose that fix again now. Either way, a decision you won't carry
 out is a **pushback**: nothing changes on the PR; record `--failed` with an
 outcome giving the reason, reply the same in the page thread, and resolve
 it, so the card offers the choices again and the user decides.
+
+**Ask** is a question, not a decision: the note is the question. Answer it
+from the code (or get the answer from the implementing session), and change
+nothing: no commit, no review comment, no thread reply. Reply with the answer
+in the page thread and resolve that thread, then record it with `--decide <ID>
+ask --note "<the question>" --outcome "<the answer>"` and republish. The
+card shows the answer and keeps its choices open; it never counts as decided.
+If the answer changes your own view of the issue, say so in it.
 
 - **Applying a fix:** work in a worktree of the PR's head branch, never in
   the user's own checkout. Make the change, run the tests that cover it,
@@ -351,12 +361,15 @@ session only changes code.
    [pr-review result] <ID> failed <why>
    [pr-review result] <ID> pushback <why, and what you'd do instead>
    [pr-review result] <ID> noted
+   [pr-review result] <ID> answer <the answer, a short paragraph>
    ```
 
    The stance line, by decision: **accept**: "reviewed this fix and is in
    favor. Give that real weight: push back only on a concrete problem you can
    show in the code." **assess**: "only skimmed this and wants your
    assessment. Apply it only if you find the issue real and the fix right."
+   **ask**: "has not decided; this is a question, in the note. Say what you
+   think, including if the issue or the fix looks wrong to you."
    **suggest**: "wrote this fix themselves; weigh it like an accepted one."
    **defer / deny**: "decided against doing this now; nothing to assess."
 
@@ -367,7 +380,8 @@ session only changes code.
    change the recommendation (or note) calls for, if any; if it calls for
    none, answer `noted`. **assess on a comment**: the same, if you judge the
    recommendation right. **defer / deny**: change nothing; record that this
-   item is not to be implemented now, and answer `noted`.
+   item is not to be implemented now, and answer `noted`. **ask**: change no
+   code; answer the question with `answer`.
 
    If the send fails, or its result says the other session holds the message
    for its user's approval, say so in the page thread (approval: "approve it
@@ -386,6 +400,9 @@ session only changes code.
    api repos/{owner}/{repo}/commits/{sha}` or the PR's commit list). If the
    idle notice arrives with no result for an item, record `--failed` ("<name>
    went idle without reporting on <ID>") and tell the user.
+
+   An `answer` changes nothing on the PR either: record it as in **Ask**
+   above, adding your own view where you disagree with it.
 
    A `pushback` changes nothing on the PR. Weigh it against the code
    yourself, then record `--failed` with an outcome that gives the other

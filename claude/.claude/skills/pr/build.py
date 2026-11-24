@@ -6,8 +6,9 @@
 
     build.py REVIEW_JSON --decide ID ACTION --outcome TEXT [--note TEXT] [--failed]
         Records the decision on item ID (an issue or a comment), then writes the page.
-        ACTION is accept, assess, suggest, defer or deny. --failed marks an attempt that did
-        not go through: the page shows the outcome and offers the choices again.
+        ACTION is accept, assess, ask, suggest, defer or deny. --failed marks an attempt that did
+        not go through: the page shows the outcome and offers the choices again. An ask is
+        never a decision: its outcome is the answer, and the choices stay open.
 
     build.py REVIEW_JSON --session NAME
         Records the implementing session the last decision was routed to ("" clears it),
@@ -26,7 +27,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 TEMPLATE = Path(__file__).with_name("review.html")
-ACTIONS = ("accept", "assess", "suggest", "defer", "deny")
+ACTIONS = ("accept", "assess", "ask", "suggest", "defer", "deny")
 PRIORITIES = ("blocker", "high", "medium", "low")
 ROLES = ("author", "reviewer")
 
@@ -103,7 +104,7 @@ def decide(data: dict, ident: str, action: str, outcome: str, note: str | None, 
                     "action": action,
                     "note": note or None,
                     "outcome": outcome,
-                    "status": "failed" if failed else "done",
+                    "status": "failed" if failed else "answered" if action == "ask" else "done",
                     "at": now.strftime("%Y-%m-%d %H:%M UTC"),
                     # Epoch ms: the page compares it with when its viewer sent a decision.
                     "ts": int(now.timestamp() * 1000),

@@ -210,6 +210,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   const ACTIONS = {
     accept: { button: "Accept", done: "Accepted", pill: "ok" },
     assess: { button: "Assess", done: "Assessed", pill: "ok" },
+    ask: { button: "Ask", done: "Answered", pill: "accent" },
     suggest: { button: "Suggest fix", done: "Your fix", pill: "accent" },
     defer: { button: "Defer", done: "Deferred", pill: "neutral" },
     deny: { button: "Deny", done: "Denied", pill: "neutral" },
@@ -218,7 +219,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
   // ---------- collapsing: a settled card (a recorded decision) opens collapsed ----------
   const OPEN_KEY = "pr-review:" + ((DATA.pr || {}).repo || "") + "#" + ((DATA.pr || {}).number || "") + ":open:";
-  const settled = (item) => !!(item.decision && item.decision.status !== "failed");
+  // An answered question and a failed attempt both leave the card open for a decision.
+  const settled = (item) => !!(item.decision && item.decision.status === "done");
   // A viewer's own choice, kept only while the card is as settled as when it was made, so a
   // card that settles later still collapses.
   function rememberedOpen(item) {
@@ -428,11 +430,13 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     return lines.join("\n");
   }
 
+  const ASK_TEXT = "Not a decision yet. Claude answers your question here and changes nothing on the PR; the choices stay open.";
   function explain(kind, action) {
     if (kind === "comment") {
       return {
         accept: "You reviewed the recommendation and back it. Claude carries it out, replies on the thread, and resolves it.",
         assess: "You only skimmed it. Claude checks the recommendation against the code first, and carries it out, replies and resolves only if it holds; otherwise it tells you why not.",
+        ask: ASK_TEXT,
         suggest: "Claude does what you write here instead, replies on the thread, and resolves it.",
         defer: "Claude replies that this moves to a follow-up, and resolves the thread.",
         deny: "Claude replies why nothing will change (your reason, or its own assessment), and resolves the thread.",
@@ -442,6 +446,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       return {
         accept: "You reviewed the fix and back it. Claude applies it to the PR branch, runs the affected tests, and pushes.",
         assess: "You only skimmed it. Claude checks the issue and the fix against the code first, and applies and pushes it only if both hold; otherwise it tells you why not.",
+        ask: ASK_TEXT,
         suggest: "Claude applies your fix instead, runs the affected tests, and pushes.",
         defer: "Recorded as a follow-up. Nothing changes on the PR.",
         deny: "Dropped. Nothing changes on the PR.",
@@ -450,6 +455,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     return {
       accept: "You reviewed the fix and back it. Claude posts this issue and the fix as a review comment on the PR.",
       assess: "You only skimmed it. Claude checks the issue and the fix against the code first, and posts them as a review comment only if both hold; otherwise it tells you why not.",
+      ask: ASK_TEXT,
       suggest: "Claude posts this issue with your fix as a review comment on the PR.",
       defer: "Recorded as a follow-up. Nothing is posted to the PR.",
       deny: "Dropped. Nothing is posted to the PR.",
@@ -459,6 +465,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   function routeNote(action) {
     const name = "<strong>" + esc(route) + "</strong>";
     const rest = "; this session handles the PR threads and this page.";
+    if (action === "ask") return "Routed to " + name + ": it answers the question and changes no code" + rest;
     if (action === "assess") return "Routed to " + name + ": it decides on its own whether the issue is real and the fix right" + rest;
     if (action === "defer" || action === "deny") return "Routed to " + name + ": it records this so it won't implement it" + rest;
     return "Routed to " + name + ": it gives your approval real weight, but may still push back on a problem it finds in the code" + rest;
@@ -483,14 +490,14 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     const box = document.createElement("div");
     box.className = "decide";
     const decision = item.decision;
-    if (decision && decision.status !== "failed") {
+    if (settled(item)) {
       renderOutcome(box, decision);
       setPending(item.id, null);
       saveDraft(item.id, null);
       return box;
     }
     const pending = readPending()[item.id];
-    // A failed attempt recorded after this viewer sent the decision ends the wait.
+    // An answer or a failed attempt recorded after this viewer sent the decision ends the wait.
     if (pending && decision && (decision.ts || 0) >= pending.at) setPending(item.id, null);
     else if (pending) {
       renderPending(box, item, kind, card, pending);
@@ -505,7 +512,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     box.innerHTML =
       '<div class="outcome"><div class="row"><span class="pill ' + meta.pill + '">' + esc(meta.done) + "</span>" +
       (decision.at ? '<span class="muted mono">' + esc(decision.at) + "</span>" : "") + "</div>" +
-      (decision.note ? '<div class="prose muted"><p>Your note: ' + inline(decision.note) + "</p></div>" : "") +
+      (decision.note ? '<div class="prose muted"><p>' + (decision.action === "ask" ? "Your question: " : "Your note: ") + inline(decision.note) + "</p></div>" : "") +
       (decision.outcome ? '<div class="prose">' + md(decision.outcome) + "</div>" : "") + "</div>";
   }
 
@@ -568,10 +575,11 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   // focus only if it was the one being typed in.
   function openComposer(composer, item, kind, card, action, draft) {
     const noteId = "note-" + item.id;
-    const required = action === "suggest";
+    const required = action === "suggest" || action === "ask";
     const placeholder = {
       accept: "Optional note for Claude",
       assess: "Optional: what to look at",
+      ask: "Your question",
       suggest: kind === "comment" ? "What should happen instead" : "Your fix",
       defer: "Optional: why, or where it goes next",
       deny: "Optional: your reason",
@@ -580,7 +588,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     composer.innerHTML =
       "<p>" + esc(explain(kind, action)) + "</p>" +
       (route ? "<p>" + routeNote(action) + "</p>" : "") +
-      '<label class="label" for="' + esc(noteId) + '">' + (required ? "Your fix (required)" : "Note") + "</label>" +
+      '<label class="label" for="' + esc(noteId) + '">' + (action === "ask" ? "Your question (required)" : required ? "Your fix (required)" : "Note") + "</label>" +
       '<textarea id="' + esc(noteId) + '" maxlength="' + NOTE_MAX + '" placeholder="' + esc(placeholder) + '"></textarea>' +
       '<div class="row"><button type="button" class="primary" data-send>Send to Claude</button>' +
       '<button type="button" data-cancel>Cancel</button><span class="status" role="status"></span></div>';
@@ -600,7 +608,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       const note = area.value.trim();
       if (required && !note) {
         status.className = "status error";
-        status.textContent = "Write the fix you want first.";
+        status.textContent = action === "ask" ? "Write your question first." : "Write the fix you want first.";
         area.focus();
         return;
       }
@@ -687,7 +695,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   function header() {
     const issues = DATA.issues || [];
     const comments = DATA.comments || [];
-    const decided = [...issues, ...comments].filter((x) => x.decision && x.decision.status !== "failed").length;
+    const decided = [...issues, ...comments].filter(settled).length;
     const total = issues.length + comments.length;
     const tally = PRIORITIES.map(([key, plural]) => {
       const n = issues.filter((x) => x.priority === key).length;
