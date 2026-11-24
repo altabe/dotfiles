@@ -153,7 +153,10 @@ records it. The issues' `where` links stay on the reviewed `head_sha`.
 Both phases and the line analysis go into one artifact page, built from the
 template beside this file. Write no review prose to the conversation.
 Every card has a Collapse/Expand button; a settled card (a recorded decision)
-opens collapsed, with its outcome in its header.
+opens collapsed, with its outcome in its header. A republish reloads every
+open view, so the template keeps an open note box (its choice, text and caret)
+and the scroll position in the viewer's browser and restores them; keep that
+when editing the template.
 
 1. Write `review.json` in a folder of its own in the scratchpad
    (`<scratchpad>/pr-<repo>-<number>/review.json`) with the shape below.
