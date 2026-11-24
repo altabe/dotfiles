@@ -144,6 +144,8 @@ Logic surface: 9 of 24 files, 533 of 2263 lines (24%).
 
 Both phases and the line analysis go into one artifact page, built from the
 template beside this file. Write no review prose to the conversation.
+Every card has a Collapse/Expand button; a settled card (a recorded decision)
+opens collapsed, with its outcome in its header.
 
 1. Write `review.json` in a folder of its own in the scratchpad
    (`<scratchpad>/pr-<repo>-<number>/review.json`) with the shape below.

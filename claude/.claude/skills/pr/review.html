@@ -121,6 +121,9 @@ section.group { display: grid; gap: 12px; }
 .card-head { display: flex; gap: 10px; align-items: flex-start; }
 .card-head .pill { margin-top: 2px; }
 .card-head h3 { flex: 1; min-width: 0; }
+.card-body { display: grid; gap: 12px; min-width: 0; }
+.card.collapsed .card-body { display: none; }
+button.card-toggle { flex: none; padding: 2px 10px; font-weight: 500; font-size: 0.8rem; }
 .id { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
 .where { display: flex; flex-wrap: wrap; gap: 6px; }
 .where a, .where span {
@@ -212,6 +215,55 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     deny: { button: "Deny", done: "Denied", pill: "neutral" },
   };
   const NOTE_MAX = 3000;
+
+  // ---------- collapsing: a settled card (a recorded decision) opens collapsed ----------
+  const OPEN_KEY = "pr-review:" + ((DATA.pr || {}).repo || "") + "#" + ((DATA.pr || {}).number || "") + ":open:";
+  const settled = (item) => !!(item.decision && item.decision.status !== "failed");
+  // A viewer's own choice, kept only while the card is as settled as when it was made, so a
+  // card that settles later still collapses.
+  function rememberedOpen(item) {
+    try {
+      const [state, wasSettled] = (localStorage.getItem(OPEN_KEY + item.id) || "").split(":");
+      if (state && wasSettled === (settled(item) ? "1" : "0")) return state === "open";
+    } catch { /* storage unavailable */ }
+    return null;
+  }
+  function setOpen(card, open) {
+    card.classList.toggle("collapsed", !open);
+    const button = card.querySelector(".card-toggle");
+    button.setAttribute("aria-expanded", String(open));
+    button.textContent = open ? "Collapse" : "Expand";
+  }
+  function collapsible(card, item) {
+    const head = card.querySelector(".card-head");
+    const body = document.createElement("div");
+    body.className = "card-body";
+    body.id = card.id + "-body";
+    while (head.nextSibling) body.append(head.nextSibling);
+    card.append(body);
+    if (settled(item)) {
+      const meta = ACTIONS[item.decision.action] || { done: item.decision.action, pill: "neutral" };
+      head.querySelector(".id").insertAdjacentHTML("beforebegin", '<span class="pill ' + esc(meta.pill) + '">' + esc(meta.done) + "</span>");
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "card-toggle";
+    button.setAttribute("aria-controls", body.id);
+    head.append(button);
+    const remembered = rememberedOpen(item);
+    setOpen(card, remembered === null ? !settled(item) : remembered);
+    button.addEventListener("click", () => {
+      const open = card.classList.contains("collapsed");
+      setOpen(card, open);
+      try { localStorage.setItem(OPEN_KEY + item.id, (open ? "open" : "closed") + ":" + (settled(item) ? "1" : "0")); } catch { /* storage unavailable */ }
+    });
+    return card;
+  }
+  // A link to a collapsed card (an "overlaps" link, a shared #item-ID) opens it.
+  function openLinkedCard() {
+    const card = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+    if (card && card.classList.contains("collapsed")) setOpen(card, true);
+  }
 
   // ---------- text ----------
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
@@ -646,7 +698,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       (item.complexity ? '<span class="pill neutral">' + esc(item.complexity) + "</span>" : "") + "</div>" +
       '<div class="prose">' + md(item.fix) + "</div></div>";
     card.append(decisionArea(item, "issue", card));
-    return card;
+    return collapsible(card, item);
   }
 
   function commentCard(item) {
@@ -670,7 +722,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       (item.reply ? '<div class="label">Reply Claude would post</div><div class="quote prose">' + md(item.reply) + "</div>" : "") +
       "</div>";
     card.append(decisionArea(item, "comment", card));
-    return card;
+    return collapsible(card, item);
   }
 
   function linesSection() {
@@ -724,8 +776,10 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     input.addEventListener("input", () => setRoute(input.value));
     renderRouteHint();
     renderBanner();
+    openLinkedCard();
   }
 
+  window.addEventListener("hashchange", openLinkedCard);
   render();
 })();
 </script>
