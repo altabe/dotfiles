@@ -1,0 +1,731 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column of finding cards grouped by severity, each ending in a decision row;
+   the review's own comments next, the line analysis last. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --fg: #171a1f;
+  --muted: #5a6370;
+  --line: #d9dee5;
+  --code-bg: #eceff3;
+  --accent: #2552c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e5ecfb;
+  --blocker: #b42318;
+  --blocker-soft: #fde8e6;
+  --high: #c2410c;
+  --high-soft: #fdecdf;
+  --medium: #8a6100;
+  --medium-soft: #fbf1d9;
+  --low: #5a6370;
+  --low-soft: #eceff3;
+  --ok: #17703f;
+  --ok-soft: #e2f3e9;
+  --font-text: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1216; --surface: #171b21; --fg: #e5e8ec; --muted: #9aa3af; --line: #2a3039;
+    --code-bg: #1f252d; --accent: #8aa7ff; --accent-ink: #0f1216; --accent-soft: #1d2740;
+    --blocker: #ff8a80; --blocker-soft: #3a1a18; --high: #ffa168; --high-soft: #3a2416;
+    --medium: #e6be5a; --medium-soft: #33290f; --low: #a3acb8; --low-soft: #232a33;
+    --ok: #5fd394; --ok-soft: #14301f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1216; --surface: #171b21; --fg: #e5e8ec; --muted: #9aa3af; --line: #2a3039;
+  --code-bg: #1f252d; --accent: #8aa7ff; --accent-ink: #0f1216; --accent-soft: #1d2740;
+  --blocker: #ff8a80; --blocker-soft: #3a1a18; --high: #ffa168; --high-soft: #3a2416;
+  --medium: #e6be5a; --medium-soft: #33290f; --low: #a3acb8; --low-soft: #232a33;
+  --ok: #5fd394; --ok-soft: #14301f; color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--font-text); }
+.page {
+  max-width: 52rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: grid; gap: 32px;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 1.6rem; line-height: 1.25; font-weight: 700; }
+h2 { font-size: 1.05rem; font-weight: 600; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+h3 { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mono { font-family: var(--font-mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+
+/* Header */
+header { display: grid; gap: 12px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 0.9rem; }
+.meta > span { min-width: 0; overflow-wrap: anywhere; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px; }
+.tally a { text-decoration: none; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px;
+  font-size: 0.8rem; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+}
+.pill.blocker { color: var(--blocker); background: var(--blocker-soft); }
+.pill.high { color: var(--high); background: var(--high-soft); }
+.pill.medium { color: var(--medium); background: var(--medium-soft); }
+.pill.low { color: var(--low); background: var(--low-soft); }
+.pill.neutral { color: var(--muted); background: transparent; border-color: var(--line); }
+.pill.ok { color: var(--ok); background: var(--ok-soft); }
+.pill.accent { color: var(--accent); background: var(--accent-soft); }
+
+.route { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.route input {
+  font: 0.85rem var(--font-mono); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 8px;
+  width: 16rem; max-width: 100%; box-sizing: border-box;
+}
+.route input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.route .hint { flex: 1 1 14rem; }
+.banner {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: 10px 14px; font-size: 0.9rem; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+}
+.banner .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; align-self: center; }
+.banner[data-state="available"] .dot { background: var(--ok); }
+.banner[data-state="blocked"] .dot { background: var(--high); }
+
+/* Prose from the review */
+.prose { min-width: 0; overflow-wrap: anywhere; }
+.prose > * { margin: 0; }
+.prose > * + * { margin-top: 0.6em; }
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li + li { margin-top: 0.25em; }
+.prose code { font-family: var(--font-mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.prose pre { background: var(--code-bg); border-radius: var(--radius); padding: 10px 12px; overflow-x: auto; font-size: 0.82rem; line-height: 1.5; }
+.prose pre code { background: none; padding: 0; font-size: inherit; }
+.prose blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+
+section.group { display: grid; gap: 12px; }
+.count { color: var(--muted); font-weight: 500; font-size: 0.9rem; }
+
+/* Finding cards */
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px; display: grid; gap: 12px; min-width: 0;
+}
+.card-head { display: flex; gap: 10px; align-items: flex-start; }
+.card-head .pill { margin-top: 2px; }
+.card-head h3 { flex: 1; min-width: 0; }
+.id { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+.where { display: flex; flex-wrap: wrap; gap: 6px; }
+.where a, .where span {
+  font-family: var(--font-mono); font-size: 0.78rem; padding: 1px 7px; border-radius: 4px;
+  background: var(--code-bg); color: var(--fg); text-decoration: none; overflow-wrap: anywhere;
+}
+.where a:hover { text-decoration: underline; }
+.fix { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 8px; }
+.fix-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.label { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.quote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+.overlaps a { font-family: var(--font-mono); font-size: 0.8rem; }
+
+/* Decisions */
+.decide { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: 600 0.86rem var(--font-text); border-radius: var(--radius); padding: 6px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+button.primary[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button:disabled { opacity: 0.55; cursor: default; }
+button.link { border: none; background: none; padding: 0; color: var(--accent); font-weight: 500; }
+.composer { display: grid; gap: 8px; }
+.composer p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+textarea {
+  width: 100%; box-sizing: border-box; min-height: 5.5em; resize: vertical; padding: 8px 10px;
+  font: 0.9rem/1.45 var(--font-text); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.status { font-size: 0.86rem; }
+.status.error { color: var(--blocker); }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.outcome { display: grid; gap: 6px; }
+.outcome .row { gap: 10px; }
+.copybox { font-family: var(--font-mono); font-size: 0.78rem; min-height: 4.5em; }
+
+/* Line analysis */
+.lines-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; }
+tr:last-child td { border-bottom: none; }
+tr.total td { font-weight: 600; }
+tr.logic td:first-child { color: var(--accent); font-weight: 600; }
+.bar { width: 100%; min-width: 80px; height: 8px; background: var(--code-bg); border-radius: 4px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--muted); opacity: 0.55; }
+tr.logic .bar > i { background: var(--accent); opacity: 1; }
+.defs { display: grid; gap: 4px; font-size: 0.88rem; color: var(--muted); }
+.surface { font-weight: 600; margin: 0; }
+footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.35rem; }
+  .card { padding: 14px 12px; }
+  .card-head { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  button { transition: background-color 120ms, border-color 120ms; }
+}
+</style>
+
+<main class="page" id="app"></main>
+
+<script type="application/json" id="review-data">__REVIEW_JSON__</script>
+<script>
+(() => {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("review-data").textContent);
+  const PR = DATA.pr || {};
+  const ROLE = PR.role === "author" ? "author" : "reviewer";
+  const PRIORITIES = [
+    ["blocker", "Blockers", "Blocker"],
+    ["high", "High", "High"],
+    ["medium", "Medium", "Medium"],
+    ["low", "Low", "Low"],
+  ];
+  const ACTIONS = {
+    accept: { button: "Accept", done: "Accepted", pill: "ok" },
+    assess: { button: "Assess", done: "Assessed", pill: "ok" },
+    suggest: { button: "Suggest fix", done: "Your fix", pill: "accent" },
+    defer: { button: "Defer", done: "Deferred", pill: "neutral" },
+    deny: { button: "Deny", done: "Denied", pill: "neutral" },
+  };
+  const NOTE_MAX = 3000;
+
+  // ---------- text ----------
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function inline(src) {
+    let out = "";
+    for (const part of String(src ?? "").split(/(`[^`\n]+`)/g)) {
+      if (part.length > 1 && part[0] === "`" && part[part.length - 1] === "`") {
+        out += "<code>" + esc(part.slice(1, -1)) + "</code>";
+        continue;
+      }
+      const links = [];
+      let t = part.replace(/\[([^\]\n]+)\]\((https:\/\/[^\s)]+)\)/g, (m, label, url) => {
+        links.push('<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(label) + "</a>");
+        return "\u0000" + (links.length - 1) + "\u0000";
+      });
+      t = t.replace(/https:\/\/[^\s<>)\]]+/g, (url) => {
+        links.push('<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + "</a>");
+        return "\u0000" + (links.length - 1) + "\u0000";
+      });
+      t = esc(t).replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+      out += t.replace(/\u0000(\d+)\u0000/g, (m, i) => links[Number(i)]);
+    }
+    return out;
+  }
+
+  function md(src) {
+    const lines = String(src ?? "").replace(/\r\n?/g, "\n").split("\n");
+    const blockStart = (l) => /^```/.test(l) || /^\s*[-*] /.test(l) || /^\s*\d+[.)] /.test(l) || /^>/.test(l);
+    let html = "";
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (/^```/.test(line)) {
+        const buf = [];
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
+        i++;
+        html += "<pre><code>" + esc(buf.join("\n")) + "</code></pre>";
+        continue;
+      }
+      const list = /^\s*[-*] /.test(line) ? ["ul", /^\s*[-*] /] : /^\s*\d+[.)] /.test(line) ? ["ol", /^\s*\d+[.)] /] : null;
+      if (list) {
+        const items = [];
+        while (i < lines.length && list[1].test(lines[i])) {
+          items.push(lines[i].replace(list[1], ""));
+          i++;
+          while (i < lines.length && lines[i].trim() && !blockStart(lines[i]) && /^\s+/.test(lines[i])) {
+            items[items.length - 1] += " " + lines[i].trim();
+            i++;
+          }
+        }
+        html += "<" + list[0] + ">" + items.map((x) => "<li>" + inline(x) + "</li>").join("") + "</" + list[0] + ">";
+        continue;
+      }
+      if (/^>/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^>/.test(lines[i])) buf.push(lines[i++].replace(/^>\s?/, ""));
+        html += "<blockquote>" + inline(buf.join(" ")) + "</blockquote>";
+        continue;
+      }
+      if (!line.trim()) { i++; continue; }
+      const buf = [];
+      while (i < lines.length && lines[i].trim() && !blockStart(lines[i])) buf.push(lines[i++].trim());
+      html += "<p>" + inline(buf.join(" ")) + "</p>";
+    }
+    return html;
+  }
+
+  function locationLink(where) {
+    const m = /^(.+?)(?::(\d+)(?:-(\d+))?)?$/.exec(String(where));
+    const repo = PR.repo, sha = PR.head_sha;
+    if (!m || !repo || !sha || !/^[\w.-]+\/[\w.-]+$/.test(repo) || !/^[0-9a-f]{7,40}$/i.test(sha)) {
+      return "<span>" + esc(where) + "</span>";
+    }
+    const path = m[1].split("/").map(encodeURIComponent).join("/");
+    const anchor = m[2] ? "#L" + m[2] + (m[3] ? "-L" + m[3] : "") : "";
+    const url = "https://github.com/" + repo + "/blob/" + sha + "/" + path + anchor;
+    return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(where) + "</a>";
+  }
+
+  // ---------- per-viewer pending marks (decisions sent, page not yet updated) ----------
+  const PENDING_KEY = "pr-review:" + (PR.repo || "") + "#" + (PR.number || "") + ":pending";
+  function readPending() {
+    try { return JSON.parse(localStorage.getItem(PENDING_KEY) || "{}") || {}; } catch { return {}; }
+  }
+  function writePending(map) {
+    try { localStorage.setItem(PENDING_KEY, JSON.stringify(map)); } catch { /* storage unavailable */ }
+  }
+  function setPending(id, action, via) {
+    const map = readPending();
+    if (action) map[id] = { action, via: via || "", at: Date.now() }; else delete map[id];
+    writePending(map);
+  }
+
+  // ---------- implementing session: where the review session passes decisions on ----------
+  const ROUTE_KEY = "pr-review:" + (PR.repo || "") + "#" + (PR.number || "") + ":implementing-session";
+  const cleanRoute = (s) => String(s ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+  function storedRoute() {
+    try {
+      const value = localStorage.getItem(ROUTE_KEY);
+      if (value !== null) return cleanRoute(value);
+    } catch { /* storage unavailable */ }
+    // The session the review last passed decisions to, so another device starts with it.
+    return cleanRoute(DATA.implementing_session);
+  }
+  let route = storedRoute();
+  function setRoute(value) {
+    route = cleanRoute(value);
+    try { localStorage.setItem(ROUTE_KEY, route); } catch { /* storage unavailable */ }
+    renderRouteHint();
+    renderBanner();
+  }
+  function renderRouteHint() {
+    const el = document.getElementById("route-hint");
+    if (!el) return;
+    el.textContent = route
+      ? "Each click goes to " + route + " through this review session."
+      : "Empty: the review session does the work itself.";
+  }
+
+  // ---------- the comments capability: how a decision reaches the session ----------
+  let commentsApi = null;
+  let sendState = "loading";
+  const ready = (async () => {
+    try {
+      commentsApi = window.claude && window.claude.use ? await window.claude.use("comments") : null;
+      sendState = commentsApi ? await commentsApi.canSendToClaude() : "off";
+    } catch {
+      sendState = "off";
+    }
+    renderBanner();
+  })();
+
+  const STATE_TEXT = {
+    loading: "Connecting to your Claude Code session.",
+    available: "Decisions go straight to the Claude Code session that published this page. It acts on each one, replies in the comment thread, and updates this page.",
+    writers_only: "Only editors of this page can send decisions. Use Copy decision and paste it into the session instead.",
+    no_session: "No Claude Code session is listening. Resume the review session (claude --resume), or copy a decision into it.",
+    off: "Decisions can't be sent from this view. Use Copy decision and paste it into the Claude Code session.",
+  };
+  function renderBanner() {
+    const el = document.getElementById("send-banner");
+    if (!el) return;
+    const state = STATE_TEXT[sendState] ? sendState : "off";
+    el.dataset.state = state === "available" ? "available" : state === "loading" ? "loading" : "blocked";
+    el.querySelector("span.text").textContent = route && state === "available"
+      ? "Decisions go to the Claude Code session that published this page, which passes each one to " +
+        route + " for the code work, then replies on the PR and updates this page."
+      : STATE_TEXT[state];
+  }
+
+  function decisionText(item, kind, action, note) {
+    const head = "[pr-review] " + item.id + " " + action;
+    const what = kind === "issue"
+      ? "Issue: " + item.title
+      : "Comment: " + (item.author || "someone") + (item.where ? " on " + item.where : "");
+    const lines = [head, what];
+    if (route) lines.push("Route: " + route);
+    if (note) lines.push("Note: " + note);
+    return lines.join("\n");
+  }
+
+  function explain(kind, action) {
+    if (kind === "comment") {
+      return {
+        accept: "You reviewed the recommendation and back it. Claude carries it out, replies on the thread, and resolves it.",
+        assess: "You only skimmed it. Claude checks the recommendation against the code first, and carries it out, replies and resolves only if it holds; otherwise it tells you why not.",
+        suggest: "Claude does what you write here instead, replies on the thread, and resolves it.",
+        defer: "Claude replies that this moves to a follow-up, and resolves the thread.",
+        deny: "Claude replies why nothing will change (your reason, or its own assessment), and resolves the thread.",
+      }[action];
+    }
+    if (ROLE === "author") {
+      return {
+        accept: "You reviewed the fix and back it. Claude applies it to the PR branch, runs the affected tests, and pushes.",
+        assess: "You only skimmed it. Claude checks the issue and the fix against the code first, and applies and pushes it only if both hold; otherwise it tells you why not.",
+        suggest: "Claude applies your fix instead, runs the affected tests, and pushes.",
+        defer: "Recorded as a follow-up. Nothing changes on the PR.",
+        deny: "Dropped. Nothing changes on the PR.",
+      }[action];
+    }
+    return {
+      accept: "You reviewed the fix and back it. Claude posts this issue and the fix as a review comment on the PR.",
+      assess: "You only skimmed it. Claude checks the issue and the fix against the code first, and posts them as a review comment only if both hold; otherwise it tells you why not.",
+      suggest: "Claude posts this issue with your fix as a review comment on the PR.",
+      defer: "Recorded as a follow-up. Nothing is posted to the PR.",
+      deny: "Dropped. Nothing is posted to the PR.",
+    }[action];
+  }
+
+  function routeNote(action) {
+    const name = "<strong>" + esc(route) + "</strong>";
+    const rest = "; this session handles the PR threads and this page.";
+    if (action === "assess") return "Routed to " + name + ": it decides on its own whether the issue is real and the fix right" + rest;
+    if (action === "defer" || action === "deny") return "Routed to " + name + ": it records this so it won't implement it" + rest;
+    return "Routed to " + name + ": it gives your approval real weight, but may still push back on a problem it finds in the code" + rest;
+  }
+
+  // ---------- decision row ----------
+  function decisionArea(item, kind, card) {
+    const box = document.createElement("div");
+    box.className = "decide";
+    const decision = item.decision;
+    if (decision && decision.status !== "failed") {
+      renderOutcome(box, decision);
+      setPending(item.id, null);
+      return box;
+    }
+    const pending = readPending()[item.id];
+    // A failed attempt recorded after this viewer sent the decision ends the wait.
+    if (pending && decision && (decision.ts || 0) >= pending.at) setPending(item.id, null);
+    else if (pending) {
+      renderPending(box, item, kind, card, pending);
+      return box;
+    }
+    renderChoices(box, item, kind, card, decision);
+    return box;
+  }
+
+  function renderOutcome(box, decision) {
+    const meta = ACTIONS[decision.action] || { done: decision.action, pill: "neutral" };
+    box.innerHTML =
+      '<div class="outcome"><div class="row"><span class="pill ' + meta.pill + '">' + esc(meta.done) + "</span>" +
+      (decision.at ? '<span class="muted mono">' + esc(decision.at) + "</span>" : "") + "</div>" +
+      (decision.note ? '<div class="prose muted"><p>Your note: ' + inline(decision.note) + "</p></div>" : "") +
+      (decision.outcome ? '<div class="prose">' + md(decision.outcome) + "</div>" : "") + "</div>";
+  }
+
+  function renderPending(box, item, kind, card, pending) {
+    const meta = ACTIONS[pending.action] || { button: pending.action };
+    const who = pending.via ? esc(pending.via) + ", through the review session," : "the session";
+    box.innerHTML =
+      '<div class="row"><span class="pill accent">Sent: ' + esc(meta.button) + '</span>' +
+      '<span class="status muted">Waiting for ' + who + " to act and update this page.</span></div>" +
+      '<p class="hint">Its reply lands in this card\'s comment thread. <button type="button" class="link" data-reset>Choose again</button></p>';
+    box.querySelector("[data-reset]").addEventListener("click", () => {
+      setPending(item.id, null);
+      box.replaceWith(decisionArea(item, kind, card));
+    });
+  }
+
+  function renderChoices(box, item, kind, card, failed) {
+    box.innerHTML = "";
+    if (failed) {
+      const prior = document.createElement("div");
+      renderOutcome(prior, failed);
+      box.append(prior);
+    }
+    const choices = document.createElement("div");
+    choices.className = "choices";
+    choices.setAttribute("role", "group");
+    choices.setAttribute("aria-label", "Decision for " + item.id);
+    const composer = document.createElement("div");
+    composer.className = "composer";
+    composer.hidden = true;
+    for (const [action, meta] of Object.entries(ACTIONS)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = meta.button;
+      b.dataset.action = action;
+      if (action === "accept") b.className = "primary";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => {
+        for (const other of choices.querySelectorAll("button")) other.setAttribute("aria-pressed", String(other === b));
+        openComposer(composer, item, kind, card, action);
+      });
+      choices.append(b);
+    }
+    box.append(choices);
+    if (kind === "comment") {
+      const hint = document.createElement("p");
+      hint.className = "hint";
+      hint.textContent = "Every choice here also replies on the PR thread where needed and resolves it.";
+      box.append(hint);
+    }
+    box.append(composer);
+  }
+
+  function openComposer(composer, item, kind, card, action) {
+    const noteId = "note-" + item.id;
+    const required = action === "suggest";
+    const placeholder = {
+      accept: "Optional note for Claude",
+      assess: "Optional: what to look at",
+      suggest: kind === "comment" ? "What should happen instead" : "Your fix",
+      defer: "Optional: why, or where it goes next",
+      deny: "Optional: your reason",
+    }[action];
+    composer.hidden = false;
+    composer.innerHTML =
+      "<p>" + esc(explain(kind, action)) + "</p>" +
+      (route ? "<p>" + routeNote(action) + "</p>" : "") +
+      '<label class="label" for="' + esc(noteId) + '">' + (required ? "Your fix (required)" : "Note") + "</label>" +
+      '<textarea id="' + esc(noteId) + '" maxlength="' + NOTE_MAX + '" placeholder="' + esc(placeholder) + '"></textarea>' +
+      '<div class="row"><button type="button" class="primary" data-send>Send to Claude</button>' +
+      '<button type="button" data-cancel>Cancel</button><span class="status" role="status"></span></div>';
+    const area = composer.querySelector("textarea");
+    const status = composer.querySelector(".status");
+    const sendBtn = composer.querySelector("[data-send]");
+    composer.querySelector("[data-cancel]").addEventListener("click", () => {
+      composer.hidden = true;
+      composer.innerHTML = "";
+      for (const b of composer.parentElement.querySelectorAll(".choices button")) b.setAttribute("aria-pressed", "false");
+    });
+    sendBtn.addEventListener("click", async () => {
+      const note = area.value.trim();
+      if (required && !note) {
+        status.className = "status error";
+        status.textContent = "Write the fix you want first.";
+        area.focus();
+        return;
+      }
+      const text = decisionText(item, kind, action, note);
+      sendBtn.disabled = true;
+      status.className = "status muted";
+      status.textContent = "Sending.";
+      const result = await send(card, text);
+      if (result.ok) {
+        setPending(item.id, action, route);
+        const box = composer.closest(".decide");
+        box.replaceWith(decisionArea(item, kind, card));
+        return;
+      }
+      sendBtn.disabled = false;
+      status.className = "status error";
+      status.textContent = result.message;
+      offerCopy(composer, text);
+    });
+    area.focus();
+  }
+
+  async function send(card, text) {
+    await ready;
+    if (!commentsApi) return { ok: false, message: STATE_TEXT.off };
+    try { sendState = await commentsApi.canSendToClaude(); } catch { sendState = "off"; }
+    renderBanner();
+    if (sendState !== "available") return { ok: false, message: STATE_TEXT[sendState] || STATE_TEXT.off };
+    try {
+      const anchor = await commentsApi.anchorFor(card);
+      await commentsApi.sendToClaude({ anchor, text });
+      return { ok: true };
+    } catch (error) {
+      const code = error && error.code;
+      const message = {
+        consent_required: "Not sent: this page needs your permission to comment as you. Allow it, then send again.",
+        claude_unavailable: "Not sent: no Claude session took it. Copy the decision into the session instead.",
+        rate_limited: "Not sent: too many at once. Wait a moment, then send again.",
+        forbidden: "Not sent: you can't comment through this page.",
+        invalid: "Not sent: the decision text was rejected. Shorten the note and try again.",
+      }[code] || "Not sent (" + (code || "error") + "). Copy the decision into the session instead.";
+      return { ok: false, message };
+    }
+  }
+
+  function offerCopy(composer, text) {
+    if (composer.querySelector("[data-copy]")) return;
+    const row = document.createElement("div");
+    row.className = "row";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.copy = "";
+    btn.textContent = "Copy decision";
+    const box = document.createElement("textarea");
+    box.className = "copybox";
+    box.readOnly = true;
+    box.hidden = true;
+    box.value = text;
+    btn.addEventListener("click", () => {
+      const done = () => { btn.textContent = "Copied"; };
+      try {
+        navigator.clipboard.writeText(text).then(done, () => { box.hidden = false; box.select(); });
+      } catch {
+        box.hidden = false;
+        box.select();
+      }
+    });
+    row.append(btn);
+    composer.append(row, box);
+  }
+
+  // ---------- page ----------
+  function header() {
+    const issues = DATA.issues || [];
+    const comments = DATA.comments || [];
+    const decided = [...issues, ...comments].filter((x) => x.decision && x.decision.status !== "failed").length;
+    const total = issues.length + comments.length;
+    const tally = PRIORITIES.map(([key, plural]) => {
+      const n = issues.filter((x) => x.priority === key).length;
+      return n ? '<a href="#' + key + '"><span class="pill ' + key + '">' + n + " " + esc(plural.toLowerCase()) + "</span></a>" : "";
+    }).join("") +
+      (comments.length ? '<a href="#comments"><span class="pill neutral">' + comments.length + " comment" + (comments.length === 1 ? "" : "s") + "</span></a>" : "") +
+      '<span class="pill ' + (decided === total && total ? "ok" : "neutral") + '">' + decided + " of " + total + " decided</span>";
+    const prLink = PR.url && /^https:\/\//.test(PR.url)
+      ? '<a href="' + esc(PR.url) + '" target="_blank" rel="noopener">' + esc(PR.repo) + " #" + esc(PR.number) + "</a>"
+      : esc(PR.repo) + " #" + esc(PR.number);
+    return '<header>' +
+      '<div class="eyebrow">' + (ROLE === "author" ? "Review of your pull request" : "Pull request review") + "</div>" +
+      "<h1>" + esc(PR.title) + "</h1>" +
+      '<div class="meta"><span>' + prLink + "</span>" +
+      (PR.author ? "<span>by " + esc(PR.author) + "</span>" : "") +
+      (PR.base && PR.head ? '<span class="mono">' + esc(PR.base) + " ← " + esc(PR.head) + "</span>" : "") +
+      (PR.head_sha ? '<span class="mono">at ' + esc(String(PR.head_sha).slice(0, 9)) + "</span>" : "") +
+      (DATA.reviewed_at ? "<span>reviewed " + esc(DATA.reviewed_at) + "</span>" : "") + "</div>" +
+      '<div class="tally">' + tally + "</div>" +
+      '<div class="route"><label class="label" for="impl-session">Implementing session</label>' +
+      '<input id="impl-session" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="session name">' +
+      '<span class="hint" id="route-hint"></span></div>' +
+      '<div class="banner" id="send-banner" data-state="loading"><span class="dot"></span><span class="text"></span></div>' +
+      "</header>";
+  }
+
+  function summary() {
+    let html = '<section class="group" aria-labelledby="what"><h2 id="what">What it changes</h2>' +
+      '<div class="prose">' + md(DATA.summary) + "</div>";
+    if (DATA.scope) html += '<div class="card"><div class="label">Scope of this review</div><div class="prose">' + md(DATA.scope) + "</div></div>";
+    return html + "</section>";
+  }
+
+  function issueCard(item, singular) {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.id = "item-" + item.id;
+    const where = (item.where || []).map(locationLink).join("");
+    card.innerHTML =
+      '<div class="card-head"><span class="pill ' + esc(item.priority) + '">' + esc(singular) + "</span>" +
+      "<h3>" + inline(item.title) + '</h3><span class="id">' + esc(item.id) + "</span></div>" +
+      (where ? '<div class="where">' + where + "</div>" : "") +
+      '<div class="prose">' + md(item.body) + "</div>" +
+      '<div class="fix"><div class="fix-head"><span class="label">Proposed fix</span>' +
+      (item.complexity ? '<span class="pill neutral">' + esc(item.complexity) + "</span>" : "") + "</div>" +
+      '<div class="prose">' + md(item.fix) + "</div></div>";
+    card.append(decisionArea(item, "issue", card));
+    return card;
+  }
+
+  function commentCard(item) {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.id = "item-" + item.id;
+    const location = item.url && /^https:\/\//.test(item.url)
+      ? '<a href="' + esc(item.url) + '" target="_blank" rel="noopener">' + esc(item.where || "on GitHub") + "</a>"
+      : item.where ? "<span>" + esc(item.where) + "</span>" : "";
+    const overlaps = (item.overlaps || []).map((id) => '<a href="#item-' + esc(id) + '">' + esc(id) + "</a>").join(", ");
+    card.innerHTML =
+      '<div class="card-head"><span class="pill neutral">' + esc(item.author || "comment") + (item.bot ? " · bot" : "") + "</span>" +
+      "<h3>" + inline(item.title || "Comment") + '</h3><span class="id">' + esc(item.id) + "</span></div>" +
+      (location ? '<div class="where">' + location + "</div>" : "") +
+      (item.quote ? '<div class="quote prose">' + md(item.quote) + "</div>" : "") +
+      '<div class="fix-head">' + (item.verdict ? '<span class="pill ' + (item.verdict === "agree" ? "ok" : "neutral") + '">' + esc(item.verdict) + "</span>" : "") +
+      (overlaps ? '<span class="overlaps muted">overlaps ' + overlaps + "</span>" : "") + "</div>" +
+      '<div class="prose">' + md(item.assessment) + "</div>" +
+      '<div class="fix"><div class="fix-head"><span class="label">Recommendation</span></div>' +
+      '<div class="prose">' + md(item.recommendation) + "</div>" +
+      (item.reply ? '<div class="label">Reply Claude would post</div><div class="quote prose">' + md(item.reply) + "</div>" : "") +
+      "</div>";
+    card.append(decisionArea(item, "comment", card));
+    return card;
+  }
+
+  function linesSection() {
+    const L = DATA.lines;
+    if (!L || !Array.isArray(L.rows)) return "";
+    const total = L.total || { files: 0, lines: 0 };
+    const max = Math.max(1, ...L.rows.map((r) => Number(r.lines) || 0));
+    const defs = L.rows.filter((r) => r.definition)
+      .map((r) => "<div><strong>" + esc(r.category) + "</strong>: " + inline(r.definition) + "</div>").join("");
+    const rows = L.rows.map((r) =>
+      '<tr class="' + (r.category === "logic" ? "logic" : "") + '"><td>' + esc(r.category) + '</td><td class="num">' + esc(r.files) +
+      '</td><td class="num">' + esc(r.lines) + '</td><td><div class="bar"><i style="width:' +
+      ((Number(r.lines) || 0) / max * 100).toFixed(1) + '%"></i></div></td></tr>').join("");
+    return '<section class="group" id="lines" aria-labelledby="lines-h"><h2 id="lines-h">Line analysis</h2>' +
+      (defs ? '<div class="defs">' + defs + "</div>" : "") +
+      '<div class="lines-wrap"><table><thead><tr><th>Category</th><th class="num">Files</th><th class="num">Lines</th><th style="width:40%"><span class="sr">Share</span></th></tr></thead><tbody>' +
+      rows + '<tr class="total"><td>total</td><td class="num">' + esc(total.files) + '</td><td class="num">' + esc(total.lines) +
+      "</td><td></td></tr></tbody></table></div>" +
+      (L.surface ? '<p class="surface">' + esc(L.surface) + "</p>" : "") + "</section>";
+  }
+
+  function render() {
+    const app = document.getElementById("app");
+    app.innerHTML = header() + summary();
+    const issues = DATA.issues || [];
+    for (const [key, plural, singular] of PRIORITIES) {
+      const group = issues.filter((x) => x.priority === key);
+      if (!group.length) continue;
+      const section = document.createElement("section");
+      section.className = "group";
+      section.id = key;
+      section.innerHTML = "<h2>" + esc(plural) + ' <span class="count">' + group.length + "</span></h2>";
+      for (const item of group) section.append(issueCard(item, singular));
+      app.append(section);
+    }
+    const comments = DATA.comments || [];
+    const cs = document.createElement("section");
+    cs.className = "group";
+    cs.id = "comments";
+    cs.innerHTML = '<h2>Existing comments <span class="count">' + comments.length + "</span></h2>" +
+      (DATA.comments_note ? '<div class="prose muted">' + md(DATA.comments_note) + "</div>" : "") +
+      (comments.length ? "" : '<p class="muted" style="margin:0">No open comment needs a decision.</p>');
+    for (const item of comments) cs.append(commentCard(item));
+    app.append(cs);
+    app.insertAdjacentHTML("beforeend", linesSection() +
+      "<footer>Each decision is sent as a comment to the Claude Code session that published this page. " +
+      "The session acts on it, or passes it to the implementing session named at the top, replies in that comment's thread, " +
+      "and republishes this page with the outcome.</footer>");
+    const input = document.getElementById("impl-session");
+    input.value = route;
+    input.addEventListener("input", () => setRoute(input.value));
+    renderRouteHint();
+    renderBanner();
+  }
+
+  render();
+})();
+</script>
