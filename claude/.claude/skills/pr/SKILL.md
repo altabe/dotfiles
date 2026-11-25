@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Ask / Suggest fix / Defer / Deny on every issue and comment; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page (or given as `impl <session>`), and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
+description: Review a GitHub/GitLab PR from its link. Describes the feature, lists prioritized issues (BLOCKERS first) with proposed fixes, then reviews the existing PR comments themselves. Presents it all as an artifact page with Accept / Assess / Ask / Suggest fix / Defer / Deny on every issue and comment, and Follow up once one is settled; each click comes back to this session, which acts on it (fix, review comment, thread reply and resolve), or passes the code work to an implementing session named on the page (or given as `impl <session>`), and updates the page. Nothing reaches the PR without a decision unless "write mode" is passed.
 argument-hint: "<PR link> [impl <session>] [write mode]"
 allowed-tools:
 ---
@@ -228,19 +228,39 @@ when editing the template.
 Issue ids are the priority's letter and a number (`B1`, `H1`, `M1`, `L1`);
 comment ids are `C1`, `C2`, …. Never reuse or renumber an id once published.
 
-## Acting on decisions
+## Comments that arrive later
+
+Every push to the PR's branch can start another review round, whether this
+session pushed or the implementing session did. Bots such as Codex re-review
+each push, and people may comment at any time. After publishing, keep watching
+the PR until the user ends the review. Run a background poller that exits when
+the PR has a review thread, review, conversation comment or reaction that
+wasn't there when it started (a `gh api graphql` snapshot compared every
+minute). When it wakes you, restart it, then handle what it found:
+
+- A new unresolved thread or substantive comment: review it as in **Phase 2**
+  (against the current head, not the reviewed one), add it to `comments` with
+  the next free `C` id, and republish. Don't wait to be asked. The card offers
+  the buttons like any other.
+- A new reply on a thread that has a card: update that card's assessment if
+  the reply changes it.
+- A bot's approval (Codex reacts 👍 on the PR body when it has nothing to
+  add): tell the user.
+
+Your own replies on PR threads also wake the poller; skip them.
 
 Every issue and comment card has six buttons: **Accept** (the user
 reviewed the fix and backs it), **Assess** (the user only skimmed it and
 wants it judged), **Ask** (the user has a question before deciding),
 **Suggest fix** (the user writes the fix), **Defer** (valid, but not in this
-PR) and **Deny** (not changing it). Ask and Suggest fix need their text; the
-rest take an optional note. A click sends a comment to Claude on that card,
-which wakes this session as an `[Artifact comment sent to Claude]` turn
-whose text starts with:
+PR) and **Deny** (not changing it). Once the item is settled, its card offers
+only **Follow up** (a question, a change or a revert; see below). Ask,
+Suggest fix and Follow up need their text; the rest take an optional note. A
+click sends a comment to Claude on that card, which wakes this session as an
+`[Artifact comment sent to Claude]` turn whose text starts with:
 
 ```
-[pr-review] <ID> <accept|assess|ask|suggest|defer|deny>
+[pr-review] <ID> <accept|assess|ask|suggest|defer|deny|followup>
 Issue: <title>          (or  Comment: <author> on <where>)
 Route: <session name>    (optional: the page's "Implementing session" box)
 Note: <the user's text>  (optional)
@@ -294,6 +314,17 @@ thread and resolve that thread. Then record it with `--decide <ID> ask --note
 "<the question>" --outcome "<the answer>"` and republish. The card shows the
 answer and keeps its choices open; it never counts as decided. Add your own
 view only where you disagree, and label it as yours.
+
+**Follow up** is the one button a settled card offers. Its note (required) is
+a question about what was done, a change to it, or a revert. It arrives as
+`[pr-review] <ID> followup`, routed like any other click. A question changes
+nothing on the PR. A change or a revert is code work. For a comment card,
+reply on its PR thread with what changed; the thread may already be
+resolved, and a reply is fine there. Record it with `build.py --followup <ID>
+--note "<the follow-up>" --outcome "<what came of it>" [--failed]`. That adds
+a follow-up record beside the decision, which still stands. Add `--reopen`
+when the follow-up undid the decision (a revert): the card then offers the
+choices again. Reply in the page thread, resolve it, and republish.
 
 - **Applying a fix:** work in a worktree of the PR's head branch, never in
   the user's own checkout. Make the change, run the tests that cover it,
@@ -393,6 +424,9 @@ session only changes code.
    think, including if the issue or the fix looks wrong to you."
    **suggest**: "wrote this fix themselves; weigh it like an accepted one."
    **defer / deny**: "decided against doing this now; nothing to assess."
+   **followup**: "already settled this item; this is a follow-up, in the
+   note: a question, a change, or a revert of what was done. Weigh a change
+   like a suggested fix."
 
    What to do, by decision: **accept / assess / suggest on an issue**: apply the fix
    on the PR's branch, run the tests that cover it, commit and push (this
@@ -402,7 +436,10 @@ session only changes code.
    none, answer `noted`. **assess on a comment**: the same, if you judge the
    recommendation right. **defer / deny**: change nothing; record that this
    item is not to be implemented now, and answer `noted`. **ask**: change no
-   code; answer the question with `answer`.
+   code; answer the question with `answer`. **followup**: for a question,
+   change no code and answer with `answer`. For a change or a revert, make it
+   on the PR's branch, run the tests that cover it, commit and push, and
+   answer `done`.
 
    If the send fails, or its result says the other session holds the message
    for its user's approval, say so in the page thread (approval: "approve it
@@ -425,7 +462,9 @@ session only changes code.
 
    An `answer` changes nothing on the PR either: record it as in **Ask**
    above. The outcome and the page-thread reply give that session's answer;
-   add your own view only where you disagree, labeled as yours.
+   add your own view only where you disagree, labeled as yours. A result for
+   a `followup` is recorded with `--followup` (see **Follow up**), never
+   `--decide`.
 
    A `pushback` changes nothing on the PR. Weigh it against the code
    yourself, then record `--failed` with an outcome that gives the other

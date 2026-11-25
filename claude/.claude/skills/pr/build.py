@@ -10,6 +10,11 @@
         not go through: the page shows the outcome and offers the choices again. An ask is
         never a decision: its outcome is the answer, and the choices stay open.
 
+    build.py REVIEW_JSON --followup ID --note TEXT --outcome TEXT [--failed] [--reopen]
+        Records a follow-up on a settled item ID: the user's note (a question, a change or a
+        revert) and what came of it, kept beside the decision, which stands. --reopen marks the
+        decision undone (a revert): the card offers the choices again.
+
     build.py REVIEW_JSON --session NAME
         Records the implementing session the last decision was routed to ("" clears it),
         so the page starts with it on another device. Combines with --decide.
@@ -72,6 +77,8 @@ def problems(data: dict) -> list[str]:
             decision = item.get("decision")
             if decision and decision.get("action") not in ACTIONS:
                 found.append(f"{item.get('id')}.decision.action: must be one of {ACTIONS}")
+            if not isinstance(item.get("followups", []), list):
+                found.append(f"{item.get('id')}.followups: must be a list")
     return found
 
 
@@ -113,6 +120,30 @@ def decide(data: dict, ident: str, action: str, outcome: str, note: str | None, 
     raise SystemExit(f"no issue or comment with id {ident!r}")
 
 
+def followup(data: dict, ident: str, note: str, outcome: str, failed: bool, reopen: bool) -> None:
+    for kind in ("issues", "comments"):
+        for item in data.get(kind, []):
+            if item.get("id") == ident:
+                decision = item.get("decision")
+                if not decision or decision.get("status") != "done":
+                    raise SystemExit(f"{ident} has no settled decision to follow up on")
+                now = datetime.now(UTC)
+                item.setdefault("followups", []).append(
+                    {
+                        "note": note,
+                        "outcome": outcome,
+                        "status": "failed" if failed else "done",
+                        "at": now.strftime("%Y-%m-%d %H:%M UTC"),
+                        # Epoch ms: the page compares it with when its viewer sent the follow-up.
+                        "ts": int(now.timestamp() * 1000),
+                    }
+                )
+                if reopen and not failed:
+                    decision["status"] = "reopened"
+                return
+    raise SystemExit(f"no issue or comment with id {ident!r}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("review", type=Path)
@@ -120,11 +151,17 @@ def main() -> None:
     parser.add_argument("--outcome", help="what was done, in light Markdown")
     parser.add_argument("--note", help="the note that came with the decision")
     parser.add_argument("--failed", action="store_true")
+    parser.add_argument("--followup", metavar="ID", help="record a follow-up on a settled item")
+    parser.add_argument("--reopen", action="store_true", help="with --followup: the decision is undone")
     parser.add_argument("--session", help='the implementing session decisions go to; "" clears it')
     args = parser.parse_args()
 
     data = json.loads(args.review.read_text(encoding="utf-8"))
-    changed = bool(args.decide) or args.session is not None
+    if args.decide and args.followup:
+        raise SystemExit("--decide and --followup are separate calls")
+    if args.reopen and not args.followup:
+        raise SystemExit("--reopen goes with --followup")
+    changed = bool(args.decide) or bool(args.followup) or args.session is not None
     if args.session is not None:
         name = " ".join(args.session.split())[:120]
         if name:
@@ -138,6 +175,10 @@ def main() -> None:
         if not args.outcome:
             raise SystemExit("--decide needs --outcome")
         decide(data, ident, action, args.outcome, args.note, args.failed)
+    if args.followup:
+        if not args.note or not args.outcome:
+            raise SystemExit("--followup needs --note and --outcome")
+        followup(data, args.followup, args.note, args.outcome, args.failed, args.reopen)
     found = problems(data)
     if found:
         print("review.json has problems:", *found, sep="\n  ", file=sys.stderr)

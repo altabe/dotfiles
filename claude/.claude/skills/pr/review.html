@@ -215,6 +215,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     defer: { button: "Defer", done: "Deferred", pill: "neutral" },
     deny: { button: "Deny", done: "Denied", pill: "neutral" },
   };
+  // Offered only on a settled card: a question about it, or a change or a revert of what was done.
+  const FOLLOWUP = { button: "Follow up", done: "Follow-up", pill: "accent" };
   const NOTE_MAX = 3000;
 
   // ---------- collapsing: a settled card (a recorded decision) opens collapsed ----------
@@ -431,7 +433,9 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   }
 
   const ASK_TEXT = "Not a decision yet. Claude answers your question here and changes nothing on the PR; the choices stay open.";
+  const FOLLOWUP_TEXT = "This item is settled. Ask about it, or ask for a change or a revert. Claude records the reply here; the decision stands unless you ask to undo it, and then the choices open again.";
   function explain(kind, action) {
+    if (action === "followup") return FOLLOWUP_TEXT;
     if (kind === "comment") {
       return {
         accept: "You reviewed the recommendation and back it. Claude carries it out, replies on the thread, and resolves it.",
@@ -466,6 +470,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     const name = "<strong>" + esc(route) + "</strong>";
     const rest = "; this session handles the PR threads and this page.";
     if (action === "ask") return "Routed to " + name + ": it answers the question and changes no code" + rest;
+    if (action === "followup") return "Routed to " + name + ": it answers, or makes the change or revert you ask for" + rest;
     if (action === "assess") return "Routed to " + name + ": it decides on its own whether the issue is real and the fix right" + rest;
     if (action === "defer" || action === "deny") return "Routed to " + name + ": it records this so it won't implement it" + rest;
     return "Routed to " + name + ": it gives your approval real weight, but may still push back on a problem it finds in the code" + rest;
@@ -490,13 +495,25 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     const box = document.createElement("div");
     box.className = "decide";
     const decision = item.decision;
+    let pending = readPending()[item.id];
+    if (pending && pending.action === "followup") {
+      // A follow-up recorded after this viewer sent one ends the wait.
+      const last = Math.max(0, ...(item.followups || []).map((f) => f.ts || 0));
+      if (last >= pending.at) {
+        setPending(item.id, null);
+        pending = undefined;
+      } else {
+        renderPending(box, item, kind, card, pending);
+        return box;
+      }
+    }
     if (settled(item)) {
       renderOutcome(box, decision);
-      setPending(item.id, null);
-      saveDraft(item.id, null);
+      renderFollowups(box, item);
+      if (pending && pending.action !== "followup") setPending(item.id, null);
+      renderFollowupChoice(box, item, kind, card);
       return box;
     }
-    const pending = readPending()[item.id];
     // An answer or a failed attempt recorded after this viewer sent the decision ends the wait.
     if (pending && decision && (decision.ts || 0) >= pending.at) setPending(item.id, null);
     else if (pending) {
@@ -511,13 +528,59 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     const meta = ACTIONS[decision.action] || { done: decision.action, pill: "neutral" };
     box.innerHTML =
       '<div class="outcome"><div class="row"><span class="pill ' + meta.pill + '">' + esc(meta.done) + "</span>" +
+      (decision.status === "reopened" ? '<span class="pill neutral">Reopened</span>' : "") +
       (decision.at ? '<span class="muted mono">' + esc(decision.at) + "</span>" : "") + "</div>" +
       (decision.note ? '<div class="prose muted"><p>' + (decision.action === "ask" ? "Your question: " : "Your note: ") + inline(decision.note) + "</p></div>" : "") +
       (decision.outcome ? '<div class="prose">' + md(decision.outcome) + "</div>" : "") + "</div>";
   }
 
+  // Every follow-up on the item, oldest first, each with what came of it.
+  function renderFollowups(box, item) {
+    for (const f of item.followups || []) {
+      const failed = f.status === "failed";
+      const el = document.createElement("div");
+      el.className = "outcome";
+      el.innerHTML =
+        '<div class="row"><span class="pill ' + (failed ? "neutral" : FOLLOWUP.pill) + '">' +
+        (failed ? "Follow-up not done" : FOLLOWUP.done) + "</span>" +
+        (f.at ? '<span class="muted mono">' + esc(f.at) + "</span>" : "") + "</div>" +
+        (f.note ? '<div class="prose muted"><p>You asked: ' + inline(f.note) + "</p></div>" : "") +
+        (f.outcome ? '<div class="prose">' + md(f.outcome) + "</div>" : "");
+      box.append(el);
+    }
+  }
+
+  // The one choice a settled card offers.
+  function renderFollowupChoice(box, item, kind, card) {
+    const choices = document.createElement("div");
+    choices.className = "choices";
+    choices.setAttribute("role", "group");
+    choices.setAttribute("aria-label", "Follow up on " + item.id);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = FOLLOWUP.button;
+    b.dataset.action = "followup";
+    b.setAttribute("aria-pressed", "false");
+    const composer = document.createElement("div");
+    composer.className = "composer";
+    composer.hidden = true;
+    b.addEventListener("click", () => {
+      b.setAttribute("aria-pressed", "true");
+      openComposer(composer, item, kind, card, "followup");
+    });
+    choices.append(b);
+    box.append(choices, composer);
+    const draft = readDrafts()[item.id];
+    if (draft && draft.action === "followup") {
+      b.setAttribute("aria-pressed", "true");
+      openComposer(composer, item, kind, card, "followup", draft);
+    } else if (draft) {
+      saveDraft(item.id, null);
+    }
+  }
+
   function renderPending(box, item, kind, card, pending) {
-    const meta = ACTIONS[pending.action] || { button: pending.action };
+    const meta = (pending.action === "followup" ? FOLLOWUP : ACTIONS[pending.action]) || { button: pending.action };
     const who = pending.via ? esc(pending.via) + ", through the review session," : "the session";
     box.innerHTML =
       '<div class="row"><span class="pill accent">Sent: ' + esc(meta.button) + '</span>' +
@@ -536,6 +599,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       renderOutcome(prior, failed);
       box.append(prior);
     }
+    renderFollowups(box, item);
     const choices = document.createElement("div");
     choices.className = "choices";
     choices.setAttribute("role", "group");
@@ -575,11 +639,12 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   // focus only if it was the one being typed in.
   function openComposer(composer, item, kind, card, action, draft) {
     const noteId = "note-" + item.id;
-    const required = action === "suggest" || action === "ask";
+    const required = action === "suggest" || action === "ask" || action === "followup";
     const placeholder = {
       accept: "Optional note for Claude",
       assess: "Optional: what to look at",
       ask: "Your question",
+      followup: "A question about it, a change you want, or a revert",
       suggest: kind === "comment" ? "What should happen instead" : "Your fix",
       defer: "Optional: why, or where it goes next",
       deny: "Optional: your reason",
@@ -588,7 +653,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     composer.innerHTML =
       "<p>" + esc(explain(kind, action)) + "</p>" +
       (route ? "<p>" + routeNote(action) + "</p>" : "") +
-      '<label class="label" for="' + esc(noteId) + '">' + (action === "ask" ? "Your question (required)" : required ? "Your fix (required)" : "Note") + "</label>" +
+      '<label class="label" for="' + esc(noteId) + '">' + (action === "ask" ? "Your question (required)" : action === "followup" ? "Your follow-up (required)" : required ? "Your fix (required)" : "Note") + "</label>" +
       '<textarea id="' + esc(noteId) + '" maxlength="' + NOTE_MAX + '" placeholder="' + esc(placeholder) + '"></textarea>' +
       '<div class="row"><button type="button" class="primary" data-send>Send to Claude</button>' +
       '<button type="button" data-cancel>Cancel</button><span class="status" role="status"></span></div>';
@@ -608,7 +673,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       const note = area.value.trim();
       if (required && !note) {
         status.className = "status error";
-        status.textContent = action === "ask" ? "Write your question first." : "Write the fix you want first.";
+        status.textContent = action === "ask" ? "Write your question first."
+          : action === "followup" ? "Write your follow-up first." : "Write the fix you want first.";
         area.focus();
         return;
       }
