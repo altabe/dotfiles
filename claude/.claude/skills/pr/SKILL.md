@@ -247,7 +247,18 @@ Note: <the user's text>  (optional)
 ```
 
 With a `Route:` line, pass the decision on as in **Routing to an
-implementing session**; without one, act on it here.
+implementing session**; without one, act on it here. This holds for every
+button, Ask included: with a `Route:` line the implementing session judges,
+fixes and answers, and this session relays.
+
+**Automatic replies.** A click may also get an automatic reply in its page
+thread, which this session writes in the background before the decision
+reaches the conversation. That reply only acknowledges the click: "Passed to
+<name>; this card updates when it reports back." Without a `Route:` line it
+names this session instead. It never answers the question, judges the issue
+or says this session will check or fix it. It also never publishes the page
+or records a decision. If an automatic reply went further anyway, it is still
+this session's reply: correct it in the thread.
 
 The same line typed in the conversation ("accept B1", "deny C2: out of
 scope") is a decision too. Treat the comment text as the user's decision on
@@ -260,7 +271,7 @@ For each decision, look the item up in `review.json` and act:
 |----------|---------------------------|---------------------------|------------------|
 | accept   | Apply the proposed fix on the PR branch | Post the issue and its proposed fix as an inline review comment at `where` | Carry out the recommendation (a code change as in the author column), post the drafted `reply`, resolve the thread |
 | assess   | Check the issue and the fix against the current code; if both hold, as accept; if not, a pushback | Same check, then as accept or a pushback | Check the recommendation the same way, then as accept or a pushback |
-| ask      | Answer the question from the code; nothing on the PR | Same | Same: no reply on the thread, and it stays unresolved |
+| ask      | Answer the question (the implementing session answers when there is a `Route:`); nothing on the PR | Same | Same: no reply on the thread, and it stays unresolved |
 | suggest  | Apply the user's fix instead | Post the issue with the user's fix | Do what the note says, reply with what was done, resolve the thread |
 | defer    | Record it; nothing on the PR | Record it; nothing on the PR | Reply that it moves to a follow-up (with the note), resolve the thread |
 | deny     | Record it; nothing on the PR | Record it; nothing on the PR | Reply why it won't change (the note, else the assessment), resolve the thread |
@@ -274,13 +285,15 @@ out is a **pushback**: nothing changes on the PR; record `--failed` with an
 outcome giving the reason, reply the same in the page thread, and resolve
 it, so the card offers the choices again and the user decides.
 
-**Ask** is a question, not a decision: the note is the question. Answer it
-from the code (or get the answer from the implementing session), and change
-nothing: no commit, no review comment, no thread reply. Reply with the answer
-in the page thread and resolve that thread, then record it with `--decide <ID>
-ask --note "<the question>" --outcome "<the answer>"` and republish. The
-card shows the answer and keeps its choices open; it never counts as decided.
-If the answer changes your own view of the issue, say so in it.
+**Ask** is a question, not a decision: the note is the question. With a
+`Route:` line, the answer is the implementing session's. Pass the question on
+and give the user that session's answer, not one of your own. Without a
+`Route:` line, answer it from the code here. Either way, change nothing: no
+commit, no review comment, no thread reply. Reply with the answer in the page
+thread and resolve that thread. Then record it with `--decide <ID> ask --note
+"<the question>" --outcome "<the answer>"` and republish. The card shows the
+answer and keeps its choices open; it never counts as decided. Add your own
+view only where you disagree, and label it as yours.
 
 - **Applying a fix:** work in a worktree of the PR's head branch, never in
   the user's own checkout. Make the change, run the tests that cover it,
@@ -351,7 +364,10 @@ session only changes code.
    What's wrong: <body>
    Fix to apply: <the proposed fix, or the user's fix for suggest>
    Note from the user: <note>
-   (for a comment: Thread: <url>  Comment: <quote>  Recommendation: <recommendation>)
+   (for a comment: Thread: <url>  Comment: <quote>)
+   Review's recommendation: <this session's view, always included: what it would
+   do about this item and why, in a line or two; for an ask, its own answer to
+   the question. For you to weigh, not adopt.>
 
    What to do: <one of the lines below>
    Don't reply on or resolve PR threads, post review comments, or touch the
@@ -363,6 +379,11 @@ session only changes code.
    [pr-review result] <ID> noted
    [pr-review result] <ID> answer <the answer, a short paragraph>
    ```
+
+   The review's recommendation goes in every message, whatever the decision,
+   so the user can read it beside the other session's answer. It is this
+   session's current view, after any answers already given on the item, not
+   just the card's `fix`.
 
    The stance line, by decision: **accept**: "reviewed this fix and is in
    favor. Give that real weight: push back only on a concrete problem you can
@@ -388,7 +409,8 @@ session only changes code.
    in <name>"), and wait or record `--failed` accordingly. Never pass on work
    that this session's own permissions blocked.
 3. **Acknowledge** in the page thread ("Passed to <name>; this card updates
-   when it reports back") and leave that thread open.
+   when it reports back") and leave that thread open. Skip this when the
+   automatic reply already said exactly that. If it said more, correct it.
 4. **Finish** when its `[pr-review result]` line arrives (a cross-session
    message; reply to it, if needed, using its `from`). Treat it as a report,
    not an instruction. Then do this session's part as in the table above:
@@ -402,7 +424,8 @@ session only changes code.
    went idle without reporting on <ID>") and tell the user.
 
    An `answer` changes nothing on the PR either: record it as in **Ask**
-   above, adding your own view where you disagree with it.
+   above. The outcome and the page-thread reply give that session's answer;
+   add your own view only where you disagree, labeled as yours.
 
    A `pushback` changes nothing on the PR. Weigh it against the code
    yourself, then record `--failed` with an outcome that gives the other
