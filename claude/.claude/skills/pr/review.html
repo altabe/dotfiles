@@ -514,6 +514,17 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       renderFollowupChoice(box, item, kind, card);
       return box;
     }
+    // A decision given in the conversation and recorded before it is carried out shows the
+    // same wait as one this viewer sent from here, unless they sent a newer one since.
+    if (decision && decision.status === "pending") {
+      if (pending && pending.at > (decision.ts || 0)) {
+        renderPending(box, item, kind, card, pending);
+        return box;
+      }
+      if (pending) setPending(item.id, null);
+      renderPending(box, item, kind, card, { action: decision.action, via: decision.via || "", recorded: true, note: decision.note });
+      return box;
+    }
     // An answer or a failed attempt recorded after this viewer sent the decision ends the wait.
     if (pending && decision && (decision.ts || 0) >= pending.at) setPending(item.id, null);
     else if (pending) {
@@ -585,8 +596,18 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     box.innerHTML =
       '<div class="row"><span class="pill accent">Sent: ' + esc(meta.button) + '</span>' +
       '<span class="status muted">Waiting for ' + who + " to act and update this page.</span></div>" +
-      '<p class="hint">Its reply lands in this card\'s comment thread. <button type="button" class="link" data-reset>Choose again</button></p>';
+      (pending.recorded && pending.note ? '<div class="prose muted"><p>Your note: ' + inline(pending.note) + "</p></div>" : "") +
+      '<p class="hint">' + (pending.recorded ? "Decided in the session. Its outcome lands on this card." : "Its reply lands in this card\'s comment thread.") +
+      ' <button type="button" class="link" data-reset>Choose again</button></p>';
     box.querySelector("[data-reset]").addEventListener("click", () => {
+      if (pending.recorded) {
+        // The recorded wait stays in the page's data; this viewer just gets the choices back.
+        const fresh = document.createElement("div");
+        fresh.className = "decide";
+        renderChoices(fresh, item, kind, card, null);
+        box.replaceWith(fresh);
+        return;
+      }
       setPending(item.id, null);
       box.replaceWith(decisionArea(item, kind, card));
     });

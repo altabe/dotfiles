@@ -10,6 +10,11 @@
         not go through: the page shows the outcome and offers the choices again. An ask is
         never a decision: its outcome is the answer, and the choices stay open.
 
+    build.py REVIEW_JSON --decide ID ACTION --pending [--note TEXT] [--session NAME]
+        Records a decision that was given in the conversation and is not carried out yet, so
+        the card shows what a click on the page shows: "Sent", waiting. The card stays open
+        and uncounted; a later --decide with --outcome replaces it.
+
     build.py REVIEW_JSON --followup ID --note TEXT --outcome TEXT [--failed] [--reopen]
         Records a follow-up on a settled item ID: the user's note (a question, a change or a
         revert) and what came of it, kept beside the decision, which stands. --reopen marks the
@@ -102,7 +107,15 @@ def render(data: dict, out: Path) -> None:
     out.write_text(page, encoding="utf-8")
 
 
-def decide(data: dict, ident: str, action: str, outcome: str, note: str | None, failed: bool) -> None:
+def decide(
+    data: dict,
+    ident: str,
+    action: str,
+    outcome: str,
+    note: str | None,
+    failed: bool,
+    pending: bool = False,
+) -> None:
     for kind in ("issues", "comments"):
         for item in data.get(kind, []):
             if item.get("id") == ident:
@@ -111,11 +124,22 @@ def decide(data: dict, ident: str, action: str, outcome: str, note: str | None, 
                     "action": action,
                     "note": note or None,
                     "outcome": outcome,
-                    "status": "failed" if failed else "answered" if action == "ask" else "done",
+                    "status": (
+                        "pending"
+                        if pending
+                        else "failed"
+                        if failed
+                        else "answered"
+                        if action == "ask"
+                        else "done"
+                    ),
                     "at": now.strftime("%Y-%m-%d %H:%M UTC"),
                     # Epoch ms: the page compares it with when its viewer sent a decision.
                     "ts": int(now.timestamp() * 1000),
                 }
+                if pending:
+                    # Who is acting on it, as the page's own "Sent" mark names it.
+                    item["decision"]["via"] = data.get("implementing_session") or None
                 return
     raise SystemExit(f"no issue or comment with id {ident!r}")
 
@@ -151,6 +175,11 @@ def main() -> None:
     parser.add_argument("--outcome", help="what was done, in light Markdown")
     parser.add_argument("--note", help="the note that came with the decision")
     parser.add_argument("--failed", action="store_true")
+    parser.add_argument(
+        "--pending",
+        action="store_true",
+        help="with --decide: the decision is taken but not carried out yet",
+    )
     parser.add_argument("--followup", metavar="ID", help="record a follow-up on a settled item")
     parser.add_argument("--reopen", action="store_true", help="with --followup: the decision is undone")
     parser.add_argument("--session", help='the implementing session decisions go to; "" clears it')
@@ -159,6 +188,8 @@ def main() -> None:
     data = json.loads(args.review.read_text(encoding="utf-8"))
     if args.decide and args.followup:
         raise SystemExit("--decide and --followup are separate calls")
+    if args.pending and not args.decide:
+        raise SystemExit("--pending goes with --decide")
     if args.reopen and not args.followup:
         raise SystemExit("--reopen goes with --followup")
     changed = bool(args.decide) or bool(args.followup) or args.session is not None
@@ -172,9 +203,11 @@ def main() -> None:
         ident, action = args.decide
         if action not in ACTIONS:
             raise SystemExit(f"ACTION must be one of {ACTIONS}")
-        if not args.outcome:
-            raise SystemExit("--decide needs --outcome")
-        decide(data, ident, action, args.outcome, args.note, args.failed)
+        if args.pending and (args.failed or args.outcome):
+            raise SystemExit("--pending records a decision before its outcome: no --outcome, no --failed")
+        if not args.pending and not args.outcome:
+            raise SystemExit("--decide needs --outcome (or --pending)")
+        decide(data, ident, action, args.outcome or "", args.note, args.failed, args.pending)
     if args.followup:
         if not args.note or not args.outcome:
             raise SystemExit("--followup needs --note and --outcome")
